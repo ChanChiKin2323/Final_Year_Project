@@ -1,8 +1,12 @@
-import React from 'react'
+import MovieSection from '../components/MovieSection'
+import FeaturedSection from '../components/FeaturedSection'
 
 const Home = () => {
   return (
-    <div>Home</div>
+    <>
+      <MovieSection />
+      <FeaturedSection />
+    </>
   )
 }
 

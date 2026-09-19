@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
-import { MenuIcon, SearchIcon, TicketPlus, User, XIcon } from 'lucide-react'
+import { MenuIcon, SearchIcon, TicketPlus, XIcon, useState } from 'lucide-react'
 import { useClerk, UserButton, useUser } from '@clerk/react'
 
 const Navbar = () => {
