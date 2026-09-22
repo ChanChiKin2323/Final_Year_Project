@@ -1,9 +1,7 @@
-import { assets } from '../assets/assets'
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowRightIcon, ClockIcon } from "lucide-react"
 import isoTimeFormat from "../lib/isoTimeFormat"
-import BlurCircle from "../components/BlurCircle"
 import toast from 'react-hot-toast'
 import { useAppContext } from "../context/AppContext"
 import Loading from "../components/Loading"
@@ -88,14 +86,17 @@ const SeatLayout = () => {
    }
 
    const renderSeats = (row, count = 9)=>(
-    <div key={row} className='flex gap-2 mt-2'>
+    <div key={row} className='mt-2 flex gap-2'>
       <div className='flex flex-wrap items-center justify-center gap-2'>
         {Array.from({ length: count }, (_, i) => {
           const seatId = `${row}${i + 1}`;
+          const isSelected = selectedSeats.includes(seatId)
+          const isTaken = occupiedSeats.includes(seatId)
           return (
-            <button key={seatId} onClick={() => handleSeatClick(seatId)} className={`h-8 w-8 rounded border border-primary/60 cursor-pointer
-            ${selectedSeats.includes(seatId) && "bg-primary text-white"}
-            ${occupiedSeats.includes(seatId) && "opacity-50 cursor-not-allowed"}`}>
+            <button key={seatId} onClick={() => handleSeatClick(seatId)}
+            className={`h-8 w-8 cursor-pointer border text-[0.65rem] transition
+            ${isSelected ? "border-ink bg-ink text-canvas" : "border-ink/25 bg-surface hover:border-ink"}
+            ${isTaken && "cursor-not-allowed border-line bg-line text-muted line-through hover:border-line"}`}>
               {seatId}
             </button>
           );
@@ -108,17 +109,29 @@ const SeatLayout = () => {
     getShow()
    },[id])
 
+   // Pick the first screening straight away so booked seats are visible on arrival.
+   useEffect(()=>{
+    const timings = show?.dateTime?.[date] || []
+    if (timings.length > 0 && !selectedTime) {
+      setSelectedTime(timings[0])
+      getOccupiedSeats(timings[0].showId)
+    }
+   },[show, date])
+
   return show ? (
-  <div className="flex flex-col md:flex-row px-6 md:px-16 lg:px-40 py-32 md:pt-52">
-    
+  <div className="mx-auto flex max-w-7xl flex-col gap-10 px-5 pb-24 pt-12 md:flex-row md:px-10">
+
     {/* Available Timings */}
-    <div className="w-60 bg-primary/10 border border-primary/20 rounded-lg py-10 h-max md:sticky md:top-28">
-      <p className="text-lg font-semibold px-6">Available Timings</p>
-      <div className="mt-5 space-y-1">
+    <div className="h-max w-full border border-ink bg-surface md:sticky md:top-28 md:w-64">
+      <p className="border-b border-ink px-5 py-4 text-[0.7rem] uppercase tracking-[0.22em]">
+        Available timings
+      </p>
+      <div className="p-3">
         {(show.dateTime[date] || []).map((item) => (
-          <div key={item.time} onClick={()=> {setSelectedTime(item); setSelectedSeats([]); getOccupiedSeats(item.showId)}} className={`flex items-center gap-2 px-6 py-2 w-max rounded-r-md
-          cursor-pointer transition ${selectedTime?.time === item.time ? "bg-primary text-white" : "hover:bg-primary/20"}`}>
-            <ClockIcon className="w-4 h-4"/>
+          <div key={item.time} onClick={()=> {setSelectedTime(item); setSelectedSeats([]); getOccupiedSeats(item.showId)}}
+          className={`flex cursor-pointer items-center gap-2 px-4 py-2.5 transition
+          ${selectedTime?.time === item.time ? "bg-ink text-canvas" : "hover:bg-accent-soft"}`}>
+            <ClockIcon className="h-4 w-4"/>
             <p className="text-sm">{isoTimeFormat(item.time)}</p>
           </div>
         ))}
@@ -126,15 +139,17 @@ const SeatLayout = () => {
     </div>
 
     {/* Seats Layout */}
-    <div className="relative flex-1 flex flex-col items-center max-md:mt-16">
-      <BlurCircle top="-100px" left="-100px"/>
-      <BlurCircle bottom="0" right="0"/>
-      <h1 className="text-2xl font-semibold mb-4">Select your seat</h1>
-      <img src={assets.screenImage} alt="screen" />
-      <p className="text-gray-400 text-sm mb-6">SCREEN SIDE</p>
+    <div className="flex flex-1 flex-col items-center">
+      <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>Step two</p>
+      <h1 className="mt-3 font-display text-3xl">Select your seat</h1>
 
-      <div className='flex flex-col items-center mt-10 text-xs text-gray-300'>
-        <div className='grid grid-cols-2 md:grid-cols-1 gap-8 md:gap-2 mb-6'>
+      <svg viewBox="0 0 400 44" className="mt-10 w-full max-w-xl text-ink/30" aria-hidden="true">
+        <path d="M6 38C100 8 300 8 394 38" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+      </svg>
+      <p className="mt-2 text-[0.65rem] uppercase tracking-[0.28em] text-muted">Screen side</p>
+
+      <div className='mt-12 flex flex-col items-center text-xs'>
+        <div className='mb-6 grid grid-cols-2 gap-8 md:grid-cols-1 md:gap-2'>
           {groupRows[0].map(row => renderSeats(row))}
         </div>
 
@@ -147,12 +162,24 @@ const SeatLayout = () => {
         </div>
       </div>
 
-      <button onClick={handleCheckout} className='flex 
-      items-center gap-1 mt-20 px-10 py-3 text-sm bg-primary 
-      hover:bg-primary-dull transition rounded-full font-medium cursor-pointer 
-      active:scale-95'>
-        Proceed to Checkout
-        <ArrowRightIcon strokeWidth={3} className="w-4 h-4"/>
+      <div className='mt-10 flex flex-wrap items-center justify-center gap-6 text-[0.65rem]
+      uppercase tracking-[0.16em] text-muted'>
+        <span className='flex items-center gap-2'>
+          <span className='h-3.5 w-3.5 border border-ink/25 bg-surface'/> Available
+        </span>
+        <span className='flex items-center gap-2'>
+          <span className='h-3.5 w-3.5 border border-ink bg-ink'/> Selected
+        </span>
+        <span className='flex items-center gap-2'>
+          <span className='h-3.5 w-3.5 border border-line bg-line'/> Taken ({occupiedSeats.length})
+        </span>
+      </div>
+
+      <button onClick={handleCheckout} className='mt-12 flex cursor-pointer items-center gap-2
+      rounded-full bg-primary px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-canvas
+      transition hover:bg-primary-dull'>
+        Proceed to checkout
+        <ArrowRightIcon strokeWidth={3} className="h-4 w-4"/>
       </button>
     </div>
   </div>

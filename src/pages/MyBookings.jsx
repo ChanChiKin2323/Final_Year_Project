@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import BlurCircle from "../components/BlurCircle"
 import timeFormat from "../lib/timeFormat"
 import dateFormat from "../lib/dateFormat"
 import { useAppContext } from "../context/AppContext"
@@ -38,44 +37,69 @@ const MyBookings = () => {
   }, [user])
 
   return !isLoading ? (
-    <div className="relative px-6 md:px-16 lg:px-40 pt-32 md:pt-40 min-h-[80vh]">
-      <BlurCircle top="100px" left="100px"/>
-      <BlurCircle bottom="0px" left="600px"/>
+    <div className="mx-auto min-h-[70vh] max-w-5xl px-5 pb-20 pt-12 md:px-10">
 
-      <h1 className="text-lg font-semibold mb-4">My Bookings</h1>
+      <div className='flex flex-wrap items-end justify-between gap-4 border-b border-ink pb-6'>
+        <div>
+          <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>Box office</p>
+          <h1 className='mt-3 font-display text-4xl md:text-5xl'>My bookings</h1>
+        </div>
+        <p className='text-[0.7rem] uppercase tracking-[0.2em] text-muted'>
+          {bookings.length} {bookings.length === 1 ? 'ticket order' : 'ticket orders'}
+        </p>
+      </div>
 
       {bookings.length === 0 && (
-        <p className="text-gray-400">No bookings yet.</p>
+        <div className='mt-10 border border-dashed border-line px-6 py-24 text-center'>
+          <h2 className='font-display text-2xl'>No bookings yet</h2>
+          <p className='mt-3 text-sm text-muted'>Your tickets will show up here once you book a show.</p>
+        </div>
       )}
 
-      {bookings.map((item) => (
-        <div key={item._id} className="flex flex-col md:flex-row justify-between
-        bg-primary/10 border border-primary/20 rounded-lg mt-4 p-2 max-w-3xl">
+      <div className='mt-10 space-y-5'>
+        {bookings.map((item) => (
+          <div key={item._id} className="flex flex-col border border-line bg-surface
+          md:flex-row md:items-stretch">
 
-          <div className="flex flex-col md:flex-row">
-            <img src={imagePath(item.show?.movie?.poster_path)} alt="" className="md:max-w-45
-            aspect-video h-auto object-cover object-bottom rounded"/>
-            <div className="flex flex-col p-4">
-              <p className="text-lg font-semibold">{item.show?.movie?.title}</p>
-              <p className="text-gray-400 text-sm">{timeFormat(item.show?.movie?.runtime)}</p>
-              <p className="text-gray-400 text-sm mt-auto">{dateFormat(item.show?.showDateTime)}</p>
+            <div className='w-full shrink-0 md:w-40'>
+              <img src={imagePath(item.show?.movie?.poster_path)} alt={item.show?.movie?.title}
+              className="h-48 w-full object-cover md:h-full"/>
             </div>
+
+            <div className="flex flex-1 flex-col gap-2 border-line p-5 md:border-r">
+              <p className="font-display text-xl">{item.show?.movie?.title}</p>
+              <p className="text-[0.7rem] uppercase tracking-[0.16em] text-muted">
+                {timeFormat(item.show?.movie?.runtime)}
+              </p>
+              <p className="mt-auto text-sm text-muted">{dateFormat(item.show?.showDateTime)}</p>
+            </div>
+
+            <div className="flex w-full flex-col justify-between gap-4 p-5 md:w-64">
+              <div className='flex items-center justify-between gap-4'>
+                <p className="font-display text-3xl">{currency}{item.amount}</p>
+                {!item.isPaid && (
+                  <button className="rounded-full bg-accent px-5 py-2 text-[0.68rem] uppercase
+                  tracking-[0.16em] text-canvas transition hover:opacity-90 cursor-pointer">
+                    Pay now
+                  </button>
+                )}
+              </div>
+
+              <dl className="space-y-1.5 text-sm">
+                <div className='flex justify-between gap-3'>
+                  <dt className="text-[0.68rem] uppercase tracking-[0.14em] text-muted">Tickets</dt>
+                  <dd>{item.bookedSeats.length}</dd>
+                </div>
+                <div className='flex justify-between gap-3'>
+                  <dt className="text-[0.68rem] uppercase tracking-[0.14em] text-muted">Seats</dt>
+                  <dd className='text-right'>{item.bookedSeats.join(", ")}</dd>
+                </div>
+              </dl>
+            </div>
+
           </div>
-
-          <div className="flex flex-col md:items-end md:text-right justify-between p-4">
-            <div className="flex items-center gap-4">
-              <p className="text-2xl font-semibold mb-3">{currency}{item.amount}</p>
-              {!item.isPaid && <button className="bg-primary px-4 py-1.5 mb-3 text-sm
-              rounded-full font-medium cursor-pointer hover:bg-primary-dull transition">Pay Now</button>}
-            </div>
-            <div className="text-sm">
-              <p><span className="text-gray-400">Total Tickets:</span> {item.bookedSeats.length}</p>
-              <p><span className="text-gray-400">Seat Number:</span> {item.bookedSeats.join(", ")}</p>
-            </div>
-          </div>
-
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   ) : (
     <Loading />

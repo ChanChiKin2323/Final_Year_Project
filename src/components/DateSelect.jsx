@@ -1,13 +1,13 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
-import BlurCircle from "./BlurCircle"
 import { useState } from "react"
 import toast from 'react-hot-toast'
 import { useNavigate } from "react-router-dom"
+import parseDateKey from "../lib/dateKey"
 
 const DataSelect = ({dateTime, id}) => {
 
     const [selected, setSelected] = useState(null)
-    
+
     const navigate = useNavigate();
 
     const onBookHandler = ()=>{
@@ -18,33 +18,36 @@ const DataSelect = ({dateTime, id}) => {
         scrollTo(0,0)
     }
 
-  return ( 
-    <div id="dataSelect" className="pt-30">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-10
-        relative p-8 bg-primary/10 border border-primary/20 rounded-lg">
-            <BlurCircle top="-100px" left="-100px"/>
-            <BlurCircle top="100px" right="0px"/>
+  return (
+    <div id="dataSelect" className="mt-20 border-y border-ink bg-accent-soft">
+        <div className="flex flex-col gap-8 p-8 md:flex-row md:items-end md:justify-between md:p-10">
             <div>
-                <p className="text-lg font-semibold">Choose Date</p>
-                <div className="flex items-center gap-6 text-sm mt-5">
-                    <ChevronLeftIcon width={28} />
-                    <span className="grid grid-cols-3 md:flex flex-wrap md:max-w-lg
-                    gap-4">
+                <p className="text-[0.7rem] uppercase tracking-[0.28em] text-accent">Step one</p>
+                <p className="mt-2 font-display text-2xl">Choose your date</p>
+
+                <div className="mt-6 flex items-center gap-4 text-sm">
+                    <ChevronLeftIcon className="h-5 w-5 shrink-0 text-muted" />
+                    <span className="grid grid-cols-3 gap-3 md:flex md:max-w-lg md:flex-wrap">
                         {Object.keys(dateTime || {}).map((date)=>(
-                            <button onClick={()=> setSelected(date)} key={date} className={`flex flex-col items-center
-                            justify-center h-14 w-14 aspect-square rounded
-                            cursor-pointer ${selected === date ? "bg-primary text-white" : "border border-primary/70" }`}>
-                                <span>{new Date(date).getDate()}</span>
-                                <span>{new Date(date).toLocaleDateString("en-US", 
-                                {month: "short"})}</span>
+                            <button onClick={()=> setSelected(date)} key={date}
+                            className={`flex h-16 w-16 cursor-pointer flex-col items-center justify-center
+                            border transition ${selected === date
+                                ? "border-ink bg-ink text-canvas"
+                                : "border-ink/25 bg-surface hover:border-ink"}`}>
+                                <span className="font-display text-xl leading-none">{parseDateKey(date).getDate()}</span>
+                                <span className="mt-1 text-[0.65rem] uppercase tracking-[0.14em]">
+                                    {parseDateKey(date).toLocaleDateString("en-US", {month: "short"})}
+                                </span>
                             </button>
                         ))}
                     </span>
-                    <ChevronRightIcon width={28} />
+                    <ChevronRightIcon className="h-5 w-5 shrink-0 text-muted" />
                 </div>
             </div>
-            <button onClick={onBookHandler} className="bg-primary text-white px-8 py-2 mt-6 rounded
-            hover:bg-primary/90 transition-all cursor-pointer">Book Now</button>
+
+            <button onClick={onBookHandler} className="bg-primary px-10 py-3.5 text-[0.72rem]
+            uppercase tracking-[0.18em] text-canvas transition hover:bg-primary-dull
+            cursor-pointer rounded-full">Book now</button>
         </div>
     </div>
   )

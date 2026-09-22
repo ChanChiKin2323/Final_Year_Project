@@ -81,25 +81,26 @@ const ListShows = () => {
     return (
         <>
             <Title text1="List" text2="Shows" />
-            <div className="max-w-4xl mt-6 overflow-x-auto">
-                <table className="w-full border-collapse rounded-md overflow-hidden text-nowrap">
+
+            <div className="mt-8 max-w-5xl overflow-x-auto border border-line bg-surface">
+                <table className="w-full border-collapse text-nowrap">
                     <thead>
-                        <tr className="bg-primary/20 text-left text-white">
-                            <th className="p-2 font-medium pl-5">Movie Name</th>
-                            <th className="p-2 font-medium">Show Time</th>
-                            <th className="p-2 font-medium">Total Bookings</th>
-                            <th className="p-2 font-medium">Price</th>
-                            <th className="p-2 font-medium">Earnings</th>
-                            <th className="p-2 font-medium">Actions</th>
+                        <tr className="border-b border-ink text-left">
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Movie name</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Show time</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Bookings</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Price</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Earnings</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="text-sm font-light">
+                    <tbody className="text-sm">
                         {shows.map((show) => (
-                            <tr key={show._id} className="border-b border-primary/10 bg-primary/5 even:bg-primary/10">
-                                <td className="p-2 min-w-45 pl-5">{show.movie?.title}</td>
-                                <td className="p-2">{dateFormat(show.showDateTime)}</td>
-                                <td className="p-2">{Object.keys(show.occupiedSeats || {}).length}</td>
-                                <td className="p-2">
+                            <tr key={show._id} className="border-b border-line last:border-none hover:bg-accent-soft/50">
+                                <td className="min-w-45 p-4">{show.movie?.title}</td>
+                                <td className="p-4 text-muted">{dateFormat(show.showDateTime)}</td>
+                                <td className="p-4">{Object.keys(show.occupiedSeats || {}).length}</td>
+                                <td className="p-4">
                                     {editingId === show._id ? (
                                         <div className="flex items-center gap-2">
                                             <span>{currency}</span>
@@ -108,20 +109,20 @@ const ListShows = () => {
                                                 min={0}
                                                 value={priceInput}
                                                 onChange={(e) => setPriceInput(e.target.value)}
-                                                className="w-20 bg-transparent border border-primary/40 rounded px-2 py-1 outline-none"
+                                                className="w-20 border border-ink/30 bg-transparent px-2 py-1 outline-none"
                                             />
-                                            <CheckIcon onClick={() => savePrice(show._id)} className="w-4 h-4 cursor-pointer text-green-400" />
-                                            <XIcon onClick={() => setEditingId(null)} className="w-4 h-4 cursor-pointer text-gray-400" />
+                                            <CheckIcon onClick={() => savePrice(show._id)} className="h-4 w-4 cursor-pointer text-primary" />
+                                            <XIcon onClick={() => setEditingId(null)} className="h-4 w-4 cursor-pointer text-muted" />
                                         </div>
                                     ) : (
                                         `${currency}${show.showPrice}`
                                     )}
                                 </td>
-                                <td className="p-2">{currency}{Object.keys(show.occupiedSeats || {}).length * show.showPrice}</td>
-                                <td className="p-2">
-                                    <div className="flex items-center gap-3">
-                                        <PencilIcon onClick={() => startEdit(show)} className="w-4 h-4 cursor-pointer hover:text-primary" />
-                                        <Trash2Icon onClick={() => handleDelete(show._id)} className="w-4 h-4 cursor-pointer hover:text-red-500" />
+                                <td className="p-4">{currency}{Object.keys(show.occupiedSeats || {}).length * show.showPrice}</td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-4">
+                                        <PencilIcon onClick={() => startEdit(show)} className="h-4 w-4 cursor-pointer hover:text-primary" />
+                                        <Trash2Icon onClick={() => handleDelete(show._id)} className="h-4 w-4 cursor-pointer hover:text-accent" />
                                     </div>
                                 </td>
                             </tr>
@@ -129,7 +130,7 @@ const ListShows = () => {
                     </tbody>
                 </table>
                 {shows.length === 0 && (
-                    <p className="text-gray-400 mt-6">No shows found.</p>
+                    <p className="p-10 text-center text-sm text-muted">No shows found.</p>
                 )}
             </div>
         </>

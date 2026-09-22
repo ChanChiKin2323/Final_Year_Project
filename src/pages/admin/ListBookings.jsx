@@ -66,44 +66,46 @@ const ListBookings = () => {
     return (
         <>
             <Title text1="List" text2="Bookings" />
-            <div className="max-w-4xl mt-6 overflow-x-auto">
-                <table className="w-full border-collapse rounded-md overflow-hidden text-nowrap">
+
+            <div className="mt-8 max-w-5xl overflow-x-auto border border-line bg-surface">
+                <table className="w-full border-collapse text-nowrap">
                     <thead>
-                        <tr className="bg-primary/20 text-left text-white">
-                            <th className="p-2 font-medium pl-5">User Name</th>
-                            <th className="p-2 font-medium">Movie Name</th>
-                            <th className="p-2 font-medium">Show Time</th>
-                            <th className="p-2 font-medium">Seats</th>
-                            <th className="p-2 font-medium">Amount</th>
-                            <th className="p-2 font-medium">Status</th>
-                            <th className="p-2 font-medium">Actions</th>
+                        <tr className="border-b border-ink text-left">
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">User name</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Movie name</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Show time</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Seats</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Amount</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Status</th>
+                            <th className="p-4 text-[0.62rem] font-normal uppercase tracking-[0.16em] text-muted">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="text-sm font-light">
+                    <tbody className="text-sm">
                         {bookings.map((item) => (
-                            <tr key={item._id} className="border-b border-primary/10 bg-primary/5 even:bg-primary/10">
-                                <td className="p-2 min-w-45 pl-5">{item.user?.name || 'Unknown'}</td>
-                                <td className="p-2">{item.show?.movie?.title}</td>
-                                <td className="p-2">{dateFormat(item.show?.showDateTime)}</td>
-                                <td className="p-2">{(item.bookedSeats || []).join(", ")}</td>
-                                <td className="p-2">{currency}{item.amount}</td>
-                                <td className="p-2">
+                            <tr key={item._id} className="border-b border-line last:border-none hover:bg-accent-soft/50">
+                                <td className="min-w-45 p-4">{item.user?.name || 'Unknown'}</td>
+                                <td className="p-4">{item.show?.movie?.title}</td>
+                                <td className="p-4 text-muted">{dateFormat(item.show?.showDateTime)}</td>
+                                <td className="p-4">{(item.bookedSeats || []).join(", ")}</td>
+                                <td className="p-4">{currency}{item.amount}</td>
+                                <td className="p-4">
                                     <button
                                         onClick={() => handleTogglePaid(item)}
-                                        className={`px-3 py-1 rounded-full text-xs cursor-pointer ${item.isPaid ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}
+                                        className={`cursor-pointer border px-3 py-1 text-[0.62rem] uppercase tracking-[0.14em]
+                                        ${item.isPaid ? 'border-primary text-primary' : 'border-accent text-accent'}`}
                                     >
                                         {item.isPaid ? 'Paid' : 'Unpaid'}
                                     </button>
                                 </td>
-                                <td className="p-2">
-                                    <Trash2Icon onClick={() => handleDelete(item._id)} className="w-4 h-4 cursor-pointer hover:text-red-500" />
+                                <td className="p-4">
+                                    <Trash2Icon onClick={() => handleDelete(item._id)} className="h-4 w-4 cursor-pointer hover:text-accent" />
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
                 {bookings.length === 0 && (
-                    <p className="text-gray-400 mt-6">No bookings found.</p>
+                    <p className="p-10 text-center text-sm text-muted">No bookings found.</p>
                 )}
             </div>
         </>

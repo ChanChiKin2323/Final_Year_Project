@@ -1,5 +1,4 @@
 import { LayoutDashboardIcon, ListCollapseIcon, ListIcon, PlusSquareIcon } from 'lucide-react'
-import { assets } from '../../assets/assets'
 import { NavLink } from 'react-router-dom'
 
 const AdminSidebar = () => {
@@ -7,8 +6,9 @@ const AdminSidebar = () => {
     const user = {
         firstName: 'Admin',
         lastName: 'User',
-        imageUrl: assets.profile,
     }
+
+    const initials = `${user.firstName[0]}${user.lastName[0]}`
 
     const adminNavlinks = [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboardIcon },
@@ -18,19 +18,28 @@ const AdminSidebar = () => {
     ]
 
   return (
-    <div className='h-[calc(100vh-64px)] md:flex flex-col items-center pt-8 max-w-13 md:max-w-60 w-full border-r border-gray-300/20 text-sm'>
-        <img className='h-9 md:h-14 w-9 md:w-14 rounded-full mx-auto' src={user.imageUrl} alt="sidebar" />
-        <p className='mt-2 text-base max-md:hidden'>{user.firstName} {user.lastName}</p>
-        <div className='w-full'>
+    <div className='flex h-[calc(100vh-64px)] w-full max-w-16 flex-col border-r border-line
+    bg-surface pt-8 text-sm md:max-w-60'>
+
+        <div className='flex flex-col items-center px-3'>
+            <div className='grid h-11 w-11 place-items-center rounded-full bg-primary
+            text-[0.7rem] tracking-[0.1em] text-canvas md:h-14 md:w-14 md:text-sm'>
+                {initials}
+            </div>
+            <p className='mt-3 text-[0.68rem] uppercase tracking-[0.2em] text-muted max-md:hidden'>
+                {user.firstName} {user.lastName}
+            </p>
+        </div>
+
+        <div className='mt-8 w-full'>
             {adminNavlinks.map((link, index)=>(
-                <NavLink key={index} to={link.path} end className={({isActive}) => `relative flex items-center max-md:justify-center gap-2 w-full py-2.5 min-md:pl-10 first:mt-6 text-gray-400 ${isActive && 'bg-primary/15 text-primary group'}`}>
-                    {({isActive})=>(
-                        <>
-                            <link.icon className="w-5 h-5" />
-                            <p className="max-md:hidden">{link.name}</p>
-                            <span className={`w-1.5 h-10 rounded-l right-0 absolute ${isActive && 'bg-primary'}`} />
-                        </>
-                    )}
+                <NavLink key={index} to={link.path} end className={({isActive}) => `relative flex
+                items-center gap-3 border-l-2 py-3 max-md:justify-center min-md:pl-8 transition
+                ${isActive
+                    ? 'border-primary bg-accent-soft text-ink'
+                    : 'border-transparent text-muted hover:text-ink'}`}>
+                    <link.icon className="h-4.5 w-4.5" />
+                    <p className="text-[0.7rem] uppercase tracking-[0.16em] max-md:hidden">{link.name}</p>
                 </NavLink>
             ))}
         </div>

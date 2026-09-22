@@ -1,25 +1,34 @@
-import BlurCircle from "../components/BlurCircle"
 import MovieCard from "../components/MovieCard"
 import { useAppContext } from "../context/AppContext"
 
 const Movies = () => {
   const { shows } = useAppContext()
 
-  return shows.length > 0 ? (
-    <div className='relative my-40 mb-60 px-6 md:px-16 lg:px-40 xl:px-44
-    overflow-hidden min-h-[80vh]'>
-      <BlurCircle top="150px" left="0px"/>
-      <BlurCircle buttom="50px" right="50px"/>
-      <h1 className='text-lg font-medium my-4'>Now Showing</h1>
-      <div className='flex flex-wrap max-sm:justify-center gap-8'>
-        {shows.map((movie)=>(
-          <MovieCard movie={movie} key={movie._id}/>
-        ))}
+  return (
+    <div className='mx-auto min-h-[70vh] max-w-7xl px-5 pb-20 pt-12 md:px-10'>
+
+      <div className='flex flex-wrap items-end justify-between gap-4 border-b border-ink pb-6'>
+        <div>
+          <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>Schedule</p>
+          <h1 className='mt-3 font-display text-4xl md:text-5xl'>Now showing</h1>
+        </div>
+        <p className='text-[0.7rem] uppercase tracking-[0.2em] text-muted'>
+          {shows.length} {shows.length === 1 ? 'title' : 'titles'}
+        </p>
       </div>
-    </div>
-  ) : (
-    <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>No movies available</h1>
+
+      {shows.length > 0 ? (
+        <div className='mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+          {shows.map((movie)=>(
+            <MovieCard movie={movie} key={movie._id}/>
+          ))}
+        </div>
+      ) : (
+        <div className='mt-10 border border-dashed border-line px-6 py-24 text-center'>
+          <h2 className='font-display text-2xl'>No movies available</h2>
+          <p className='mt-3 text-sm text-muted'>Shows added from the admin dashboard will appear here.</p>
+        </div>
+      )}
     </div>
   )
 }

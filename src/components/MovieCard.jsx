@@ -7,32 +7,49 @@ const MovieCard = ({movie}) => {
 
     const navigate = useNavigate()
 
+    const openMovie = () => {
+        navigate(`/movies/${movie._id}`)
+        scrollTo(0, 0)
+    }
+
+    const poster = imagePath(movie.poster_path || movie.backdrop_path)
+
   return (
-    <div className='flex flex-col justify-between p-3 bg-gray-800
-    rounded-2xl hover:-translate-y-1 transition duration-300 w-66'>
+    <article className='group flex w-full flex-col border border-line bg-surface transition
+    duration-300 hover:border-ink'>
 
-        <img onClick={()=>{navigate(`/movies/${movie._id}`); scrollTo(0,0)}}
-        src={imagePath(movie.backdrop_path || movie.poster_path)} alt="" className="rounded-lg h-52 w-full
-        object-cover object-right-bottom cursor-pointer"  />
+        <button onClick={openMovie} className='relative block aspect-[2/3] w-full
+        cursor-pointer overflow-hidden bg-line'>
+            {poster ? (
+                <img src={poster} alt={movie.title} className='h-full w-full object-cover
+                transition duration-500 group-hover:scale-[1.04]' />
+            ) : (
+                <span className='grid h-full w-full place-items-center font-display text-4xl text-muted'>
+                    {movie.title?.[0]}
+                </span>
+            )}
 
-        <p className="font-semibold mt-2 truncate">{movie.title}</p>
-
-        <p className="text-sm text-gray-400 mt-2">
-            {new Date(movie.release_date).getFullYear()} . {(movie.genres || []).slice(0,2).map(genre => genre.name).join(" | ")} . {timeFormat(movie.runtime)}
-        </p>
-
-        <div className='flex items-center justify-between mt-4 pb-3'>
-            <button onClick={()=>{navigate(`/movies/${movie._id}`); scrollTo(0,0)}} 
-            className='px-4 py-2 text-xs bg-primary hover:bg-primary-dull 
-            transition rounded-full font-medium cursor-pointer'>Buys Tickets</button>
-            
-            <p className='flex items-center gap-1 text-sm text-grey-400 mt-1 pr-1'>
-                <StarIcon className="w-4 h-4 text-primary fill-primary"/>
+            <span className='absolute left-0 top-4 flex items-center gap-1 bg-ink px-2.5 py-1
+            text-[0.7rem] text-canvas'>
+                <StarIcon className="h-3 w-3 fill-accent text-accent"/>
                 {Number(movie.vote_average).toFixed(1)}
+            </span>
+        </button>
+
+        <div className='flex flex-1 flex-col gap-3 p-4'>
+            <h3 className='font-display text-lg leading-snug'>{movie.title}</h3>
+
+            <p className="text-[0.7rem] uppercase tracking-[0.12em] text-muted">
+                {new Date(movie.release_date).getFullYear()} · {(movie.genres || []).slice(0,2).map(genre => genre.name).join(" / ")} · {timeFormat(movie.runtime)}
             </p>
+
+            <button onClick={openMovie} className='mt-auto w-full cursor-pointer border border-ink
+            py-2.5 text-[0.7rem] uppercase tracking-[0.18em] transition hover:bg-ink hover:text-canvas'>
+                Buy tickets
+            </button>
         </div>
 
-    </div>
+    </article>
   )
 }
 

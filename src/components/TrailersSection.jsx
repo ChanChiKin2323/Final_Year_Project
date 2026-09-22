@@ -1,37 +1,52 @@
 import { useState } from "react"
-import { trailers } from '../assets/assets'
 import ReactPlayer from 'react-player'
-import BlurCircle from './BlurCircle'
 import { PlayCircleIcon } from 'lucide-react'
+import { trailers } from '../data/trailers'
 
 const TrailersSection = () => {
 
     const [currentTrailer, setCurrentTrailer] = useState(trailers[0])
 
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 overflow-hidden">
-        <p className='text-gray-300 font-medium text-lg max-w-[960px]
-        mx-auto'>Trailers</p>
+    // This band stays dark in both themes, so the colours here are fixed on purpose.
+    <section className="border-y border-line bg-[#14120F] text-[#F2EDE3]">
+        <div className="mx-auto grid max-w-7xl gap-12 px-5 py-20 md:grid-cols-[0.8fr_1.2fr] md:px-10">
 
-        <div className="relative mt-6">
-            <BlurCircle top='-100px' right='-100px'/>
-            <ReactPlayer src={currentTrailer.videoUrl} controls={false}
-            className="mx-auto max-w-full" width="960px" height="540px" />
-        </div>
+            <div>
+                <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>Trailers</p>
+                <h2 className='mt-3 font-display text-3xl md:text-4xl'>Watch before you book</h2>
 
-        <div className='group grid grid-cols-4 gap-4 md:gap-8 mt-8 max-w-3xl mx-auto'>
-            {trailers.map((trailer) => (
-                <div
-                    key={trailer.image}
-                    className='relative group-hover:not-hover:opacity-50 hover:-translate-y-1 duration-300 transition max-md:h-60 md:max-h-60 cursor-pointer'
-                    onClick={() => setCurrentTrailer(trailer)}
-                >
-                    <img src={trailer.image} alt="trailer" className='rounded-lg w-full h-full object-cover brightness-75' />
-                    <PlayCircleIcon strokeWidth={1.6} className="absolute top-1/2 left-1/2 w-5 md:w-8 h-5 md:h-12 transform -translate-x-1/2 -translate-y-1/2" />
+                <ul className='mt-8 border-y border-[#F2EDE3]/15'>
+                    {trailers.map((trailer, index) => {
+                        const isActive = trailer.videoUrl === currentTrailer.videoUrl
+                        return (
+                            <li key={trailer.videoUrl} className='border-b border-[#F2EDE3]/15 last:border-none'>
+                                <button onClick={() => setCurrentTrailer(trailer)}
+                                className={`flex w-full cursor-pointer items-center gap-4 py-3.5 text-left
+                                transition ${isActive ? 'text-[#F2EDE3]' : 'text-[#F2EDE3]/55 hover:text-[#F2EDE3]'}`}>
+                                    <span className='w-6 text-[0.7rem] tracking-[0.1em]'>
+                                        {String(index + 1).padStart(2, '0')}
+                                    </span>
+                                    <img src={trailer.image} alt={trailer.title}
+                                    className={`h-11 w-20 object-cover transition
+                                    ${isActive ? 'opacity-100' : 'opacity-60'}`}/>
+                                    <span className='flex-1 text-sm'>{trailer.title}</span>
+                                    <PlayCircleIcon strokeWidth={1.6} className='h-5 w-5'/>
+                                </button>
+                            </li>
+                        )
+                    })}
+                </ul>
+            </div>
+
+            <div className='border border-[#F2EDE3]/20 p-2'>
+                <div className='aspect-video w-full'>
+                    <ReactPlayer src={currentTrailer.videoUrl} controls
+                    width="100%" height="100%" />
                 </div>
-            ))}
+            </div>
         </div>
-    </div>
+    </section>
   )
 }
 

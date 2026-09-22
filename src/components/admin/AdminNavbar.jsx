@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom'
-import { assets } from '../../assets/assets'
+import Logo from '../brand/Logo'
+import ThemeToggle from '../ThemeToggle'
 
 const AdminNavbar = () => {
   return (
-    <div className='flex items-center justify-between px-6 md:px-10 h-16 border-b border-gray-300/30'>
-        <Link to="/">
-            <img src={assets.logo} alt="logo" className="w-36 h-auto"/>
+    <div className='flex h-16 items-center justify-between border-b border-line bg-surface px-6 md:px-10'>
+        <Link to="/" className='flex items-center gap-3'>
+            <Logo />
         </Link>
+        <div className='flex items-center gap-4'>
+            <span className='border border-ink px-3 py-1 text-[0.62rem] uppercase tracking-[0.22em]'>
+                Box office admin
+            </span>
+            <ThemeToggle />
+        </div>
     </div>
   )
 }

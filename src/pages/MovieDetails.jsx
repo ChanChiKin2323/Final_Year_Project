@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-import BlurCircle from "../components/BlurCircle"
 import { Heart, PlayCircleIcon, StarIcon } from "lucide-react"
 import timeFormat from "../lib/timeFormat"
 import DataSelect from "../components/DateSelect"
@@ -51,61 +50,91 @@ useEffect(()=>{
   getShow()
 },[id])
 
-  return show ? (
-    <div className='px-6 md:px-16 lg:px-40 pt-30 md:pt-50'>
-      <div className='flex flex-col md:flex-row gap-8 max-w-6xl mx-auto'>
-        <img src={imagePath(show.movie.poster_path)} alt="" className='max-md:mx-auto
-        rounded-xl h-104 max-w-70 object-cover'/>
-        <div className="relative flex flex-col gap-3">
-          <BlurCircle top="-100px" left="-100px"/>
-          <p className="text-primary">ENGLISH</p>
-          <h1 className="text-4xl font-semibold max-w-96 text-balance">{show.movie.title}</h1>
-          <div className="flex items-center gap-2 text-gray-300">
-            <StarIcon className="w-5 h-5 text-primary fill-primary"/>
-            {Number(show.movie.vote_average).toFixed(1)} User Rating
-          </div>
-          <p className="text-gray-400 mt-2 text-sm leading-tight max-w-xl">{show.movie.overview}</p>
-          
-          <p>
-            {timeFormat(show.movie.runtime)}．{(show.movie.genres || []).map(genre => 
-              genre.name).join(", ")}．{show.movie.release_date?.split("-")[0]}
-          </p>
+  const isFavorite = favoriteMovies.find(movie => movie._id === id)
 
-          <div className="flex items-center flex-wrap gap-4 mt-4">
-            <button className="flex items-center gap-2 px-7 py-3 text-sm
-            bg-gray-800 hover:bg-gray-900 transition rounded-md font-medium
-            cursor-pointer active:scale-95">
-              <PlayCircleIcon className="w-5 h-5"/>
-              Watch Trailer
-              </button>
-            <a href="#dataSelect" className="px-10 py-3 text-sm bg-primary 
-            hover:bg-primary-dull transition rounded-md font-medium cursor-pointer 
-            active:scale-95">Buy Tickets</a>
-            <button onClick={handleFavorite} className="bg-gray-700 p-2.5 rounded-full transition
-            cursor-pointer active:scale-95">
-              <Heart className={`w-5 h-5 ${favoriteMovies.find(movie => movie._id === id) ? 'fill-primary text-primary' : '' }`}/>
+  return show ? (
+    <div className='mx-auto max-w-7xl px-5 pb-20 pt-12 md:px-10'>
+
+      <div className='grid gap-10 md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr]'>
+
+        <div className='h-max md:sticky md:top-28'>
+          <img src={imagePath(show.movie.poster_path)} alt={show.movie.title}
+          className='w-full border border-ink object-cover'/>
+
+          <button onClick={handleFavorite} className='mt-3 flex w-full cursor-pointer items-center
+          justify-center gap-2 border border-ink py-3 text-[0.7rem] uppercase tracking-[0.18em]
+          transition hover:bg-ink hover:text-canvas'>
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-accent text-accent' : ''}`}/>
+            {isFavorite ? 'Saved' : 'Save to favourites'}
+          </button>
+        </div>
+
+        <div>
+          <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>English · Feature</p>
+          <h1 className='mt-4 font-display text-4xl leading-[1.08] md:text-5xl'>{show.movie.title}</h1>
+
+          <div className='mt-4 flex items-center gap-2 text-sm text-muted'>
+            <StarIcon className='h-4 w-4 fill-accent text-accent'/>
+            {Number(show.movie.vote_average).toFixed(1)} user rating
+          </div>
+
+          <dl className='mt-8 grid max-w-2xl grid-cols-2 gap-px border border-line bg-line sm:grid-cols-3'>
+            <div className='bg-canvas p-4'>
+              <dt className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Runtime</dt>
+              <dd className='mt-1.5 text-sm'>{timeFormat(show.movie.runtime)}</dd>
+            </div>
+            <div className='bg-canvas p-4'>
+              <dt className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Released</dt>
+              <dd className='mt-1.5 text-sm'>{show.movie.release_date?.split("-")[0]}</dd>
+            </div>
+            <div className='col-span-2 bg-canvas p-4 sm:col-span-1'>
+              <dt className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Genres</dt>
+              <dd className='mt-1.5 text-sm'>{(show.movie.genres || []).map(genre => genre.name).join(", ")}</dd>
+            </div>
+          </dl>
+
+          <p className='mt-8 max-w-2xl text-sm leading-relaxed text-muted'>{show.movie.overview}</p>
+
+          <div className='mt-9 flex flex-wrap items-center gap-4'>
+            <a href="#dataSelect" className='rounded-full bg-primary px-10 py-3.5 text-[0.72rem]
+            uppercase tracking-[0.18em] text-canvas transition hover:bg-primary-dull cursor-pointer'>
+              Buy tickets
+            </a>
+            <button className='flex items-center gap-2 rounded-full border border-ink px-8 py-3.5
+            text-[0.72rem] uppercase tracking-[0.18em] transition hover:bg-ink hover:text-canvas
+            cursor-pointer'>
+              <PlayCircleIcon className='h-4 w-4'/>
+              Watch trailer
             </button>
           </div>
         </div>
       </div>
-      
-      <p className="text-lg font-medium mt-20">Your Favourite Cast</p>
-      <div className="overflow-x-auto no-scrollbar mt-8 pb-4">
-          <div className="flex items-center gap-4 w-max px-4">
-            {(show.movie.casts || []).slice(0,12).map((cast,index)=>(
-              <div key={index} className="flex flex-col items-center text-center">
-                <img src={imagePath(cast.profile_path)} alt="" className="rounded-full h-20
-                md:h-20 aspect-square object-cover" />
-                <p className="font-medium text-xs mt-3">{cast.name}</p>
-              </div>
-            ))}
+
+      {(show.movie.casts || []).length > 0 && (
+        <>
+          <p className='mt-20 border-b border-line pb-4 text-[0.7rem] uppercase tracking-[0.24em] text-muted'>
+            Cast
+          </p>
+          <div className='no-scrollbar mt-8 overflow-x-auto pb-4'>
+            <div className='flex w-max items-start gap-8'>
+              {show.movie.casts.slice(0,12).map((cast,index)=>(
+                <div key={index} className='w-24 text-center'>
+                  <img src={imagePath(cast.profile_path)} alt={cast.name}
+                  className='aspect-square h-20 w-20 border border-line object-cover'/>
+                  <p className='mt-3 text-xs leading-snug'>{cast.name}</p>
+                </div>
+              ))}
+            </div>
           </div>
-      </div>
+        </>
+      )}
 
       <DataSelect dateTime={show.dateTime} id={id}/>
 
-      <p className="text-lg font-medium mt-20 mb-8">You may also like</p>
-      <div className="flex flex-wrap max-sm:justify-center gap-8">
+      <p className='mt-20 border-b border-line pb-4 text-[0.7rem] uppercase tracking-[0.24em] text-muted'>
+        You may also like
+      </p>
+      <div className='mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
         {shows.filter((movie) => movie._id !== id).slice(0, 4).map((movie) => (
           <MovieCard key={movie._id} movie={movie} />
         ))}
@@ -113,9 +142,11 @@ useEffect(()=>{
 
     </div>
   ) : show === false ? (
-    <div className='flex flex-col items-center justify-center h-screen'>
-      <h1 className='text-3xl font-bold text-center'>Movie not found</h1>
-      <p className='text-gray-400 mt-3'>The admin dashboard is at /admin, not /movies/admin.</p>
+    <div className='mx-auto max-w-7xl px-5 py-32 md:px-10'>
+      <div className='border border-dashed border-line px-6 py-24 text-center'>
+        <h1 className='font-display text-3xl'>Movie not found</h1>
+        <p className='mt-3 text-sm text-muted'>The admin dashboard is at /admin, not /movies/admin.</p>
+      </div>
     </div>
   ) : <Loading />
 }
