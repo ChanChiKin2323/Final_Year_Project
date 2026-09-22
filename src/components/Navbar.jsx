@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
-import { MenuIcon, SearchIcon, TicketPlus, XIcon } from 'lucide-react'
+import { LayoutDashboardIcon, MenuIcon, SearchIcon, TicketPlus, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useClerk, UserButton, useUser } from '@clerk/react'
 
@@ -44,6 +44,7 @@ const Navbar = () => {
           <UserButton>
             <UserButton.MenuItems>
               <UserButton.Action label='My Bookings' labelIcon={<TicketPlus width={15}/>} onClick={()=> navigate('/my-bookings')}/>
+              <UserButton.Action label='Dashboard' labelIcon={<LayoutDashboardIcon width={15}/>} onClick={()=> navigate('/admin')}/>
             </UserButton.MenuItems>
           </UserButton>
         )
