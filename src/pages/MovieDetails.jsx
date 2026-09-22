@@ -1,29 +1,60 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-import { dummyDateTimeData, dummyShowsData } from "../assets/assets"
 import BlurCircle from "../components/BlurCircle"
 import { Heart, PlayCircleIcon, StarIcon } from "lucide-react"
 import timeFormat from "../lib/timeFormat"
 import DataSelect from "../components/DateSelect"
+import { useAppContext } from "../context/AppContext"
+import imagePath from "../lib/imagePath"
+import MovieCard from "../components/MovieCard"
+import toast from "react-hot-toast"
+import Loading from "../components/Loading"
 
 const MovieDetails = () => {
   const {id} = useParams()
   const [show, setShow] = useState(null)
+  const { axios, shows, user, getToken, favoriteMovies, fetchFavoriteMovies } = useAppContext()
 
   const getShow = async ()=>{
-    const show = dummyShowsData.find(show => show._id === id)
-    setShow({
-      movie: show,
-      dateTime: dummyDateTimeData
-    })
+    try {
+      const { data } = await axios.get(`/api/show/${id}`)
+      if (data.success && data.movie) {
+        setShow({
+          movie: data.movie,
+          dateTime: data.dateTime
+        })
+      } else {
+        setShow(false)
+      }
+    } catch (error) {
+      console.error(error)
+      setShow(false)
+    }
   }
+
+  const handleFavorite = async () => {
+    try {
+      if (!user) return toast.error('Please login to proceed')
+      const { data } = await axios.post('/api/user/update-favorite', { movieId: id }, {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+      if (data.success) {
+        await fetchFavoriteMovies()
+        toast.success(data.message)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
 useEffect(()=>{
   getShow()
 },[id])
+
   return show ? (
     <div className='px-6 md:px-16 lg:px-40 pt-30 md:pt-50'>
       <div className='flex flex-col md:flex-row gap-8 max-w-6xl mx-auto'>
-        <img src={show.movie.poster_path} alt="" className='max-md:mx-auto
+        <img src={imagePath(show.movie.poster_path)} alt="" className='max-md:mx-auto
         rounded-xl h-104 max-w-70 object-cover'/>
         <div className="relative flex flex-col gap-3">
           <BlurCircle top="-100px" left="-100px"/>
@@ -31,13 +62,13 @@ useEffect(()=>{
           <h1 className="text-4xl font-semibold max-w-96 text-balance">{show.movie.title}</h1>
           <div className="flex items-center gap-2 text-gray-300">
             <StarIcon className="w-5 h-5 text-primary fill-primary"/>
-            {show.movie.vote_average.toFixed(1)} User Rating
+            {Number(show.movie.vote_average).toFixed(1)} User Rating
           </div>
           <p className="text-gray-400 mt-2 text-sm leading-tight max-w-xl">{show.movie.overview}</p>
           
           <p>
-            {timeFormat(show.movie.runtime)}．{show.movie.genres.map(genre => 
-              genre.name).join(", ")}．{show.movie.release_date.split("-")[0]}
+            {timeFormat(show.movie.runtime)}．{(show.movie.genres || []).map(genre => 
+              genre.name).join(", ")}．{show.movie.release_date?.split("-")[0]}
           </p>
 
           <div className="flex items-center flex-wrap gap-4 mt-4">
@@ -50,9 +81,9 @@ useEffect(()=>{
             <a href="#dataSelect" className="px-10 py-3 text-sm bg-primary 
             hover:bg-primary-dull transition rounded-md font-medium cursor-pointer 
             active:scale-95">Buy Tickets</a>
-            <button className="bg-gray-700 p-2.5 rounded-full transition
+            <button onClick={handleFavorite} className="bg-gray-700 p-2.5 rounded-full transition
             cursor-pointer active:scale-95">
-              <Heart className={`w-5 h-5 `}/>
+              <Heart className={`w-5 h-5 ${favoriteMovies.find(movie => movie._id === id) ? 'fill-primary text-primary' : '' }`}/>
             </button>
           </div>
         </div>
@@ -61,9 +92,9 @@ useEffect(()=>{
       <p className="text-lg font-medium mt-20">Your Favourite Cast</p>
       <div className="overflow-x-auto no-scrollbar mt-8 pb-4">
           <div className="flex items-center gap-4 w-max px-4">
-            {show.movie.casts.slice(0,12).map((cast,index)=>(
+            {(show.movie.casts || []).slice(0,12).map((cast,index)=>(
               <div key={index} className="flex flex-col items-center text-center">
-                <img src={cast.profile_path} alt="" className="rounded-full h-20
+                <img src={imagePath(cast.profile_path)} alt="" className="rounded-full h-20
                 md:h-20 aspect-square object-cover" />
                 <p className="font-medium text-xs mt-3">{cast.name}</p>
               </div>
@@ -73,10 +104,20 @@ useEffect(()=>{
 
       <DataSelect dateTime={show.dateTime} id={id}/>
 
-      <p>You may also like</p>
+      <p className="text-lg font-medium mt-20 mb-8">You may also like</p>
+      <div className="flex flex-wrap max-sm:justify-center gap-8">
+        {shows.filter((movie) => movie._id !== id).slice(0, 4).map((movie) => (
+          <MovieCard key={movie._id} movie={movie} />
+        ))}
+      </div>
 
     </div>
-  ) : <div>Loading...</div>
+  ) : show === false ? (
+    <div className='flex flex-col items-center justify-center h-screen'>
+      <h1 className='text-3xl font-bold text-center'>Movie not found</h1>
+      <p className='text-gray-400 mt-3'>The admin dashboard is at /admin, not /movies/admin.</p>
+    </div>
+  ) : <Loading />
 }
 
 export default MovieDetails

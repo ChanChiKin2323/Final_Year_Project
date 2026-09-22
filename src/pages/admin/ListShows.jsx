@@ -1,35 +1,82 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Title from '../../components/admin/Title'
 import dateFormat from '../../lib/dateFormat'
-import { useAdmin } from '../../context/AdminContext'
 import { CheckIcon, PencilIcon, Trash2Icon, XIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useAppContext } from '../../context/AppContext'
+import Loading from '../../components/Loading'
 
 const ListShows = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$'
-    const { shows, updateShow, deleteShow } = useAdmin()
+    const { axios, getToken, fetchShows } = useAppContext()
+    const [shows, setShows] = useState([])
+    const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState(null)
     const [priceInput, setPriceInput] = useState('')
+
+    const getAllShows = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/all-shows', {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                setShows(data.shows)
+            }
+        } catch (error) {
+            console.error(error)
+        }
+        setLoading(false)
+    }
 
     const startEdit = (show) => {
         setEditingId(show._id)
         setPriceInput(String(show.showPrice))
     }
 
-    const savePrice = (id) => {
+    const savePrice = async (id) => {
         const nextPrice = Number(priceInput)
         if (!nextPrice || nextPrice < 0) {
             return toast.error('Enter a valid price')
         }
-        updateShow(id, { showPrice: nextPrice })
-        setEditingId(null)
-        toast.success('Show price updated')
+        try {
+            const { data } = await axios.put(`/api/admin/show/${id}`, { showPrice: nextPrice }, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                toast.success('Show price updated')
+                setEditingId(null)
+                getAllShows()
+                fetchShows()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
 
-    const handleDelete = (id) => {
-        deleteShow(id)
-        toast.success('Show deleted')
+    const handleDelete = async (id) => {
+        try {
+            const { data } = await axios.delete(`/api/admin/show/${id}`, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                toast.success('Show deleted')
+                getAllShows()
+                fetchShows()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
+
+    useEffect(() => {
+        getAllShows()
+    }, [])
+
+    if (loading) return <Loading />
 
     return (
         <>
@@ -49,7 +96,7 @@ const ListShows = () => {
                     <tbody className="text-sm font-light">
                         {shows.map((show) => (
                             <tr key={show._id} className="border-b border-primary/10 bg-primary/5 even:bg-primary/10">
-                                <td className="p-2 min-w-45 pl-5">{show.movie.title}</td>
+                                <td className="p-2 min-w-45 pl-5">{show.movie?.title}</td>
                                 <td className="p-2">{dateFormat(show.showDateTime)}</td>
                                 <td className="p-2">{Object.keys(show.occupiedSeats || {}).length}</td>
                                 <td className="p-2">

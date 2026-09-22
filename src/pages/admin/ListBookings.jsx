@@ -1,17 +1,67 @@
+import { useEffect, useState } from 'react'
 import Title from '../../components/admin/Title'
 import dateFormat from '../../lib/dateFormat'
-import { useAdmin } from '../../context/AdminContext'
 import { Trash2Icon } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useAppContext } from '../../context/AppContext'
+import Loading from '../../components/Loading'
 
 const ListBookings = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$'
-    const { bookings, toggleBookingPaid, deleteBooking } = useAdmin()
+    const { axios, getToken } = useAppContext()
+    const [bookings, setBookings] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    const handleDelete = (id) => {
-        deleteBooking(id)
-        toast.success('Booking deleted')
+    const getAllBookings = async () => {
+        try {
+            const { data } = await axios.get('/api/admin/all-bookings', {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                setBookings(data.bookings)
+            }
+        } catch (error) {
+            console.error(error)
+        }
+        setLoading(false)
     }
+
+    const handleTogglePaid = async (item) => {
+        try {
+            const { data } = await axios.put(`/api/admin/booking/${item._id}`, { isPaid: !item.isPaid }, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                getAllBookings()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const handleDelete = async (id) => {
+        try {
+            const { data } = await axios.delete(`/api/admin/booking/${id}`, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                toast.success('Booking deleted')
+                getAllBookings()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    useEffect(() => {
+        getAllBookings()
+    }, [])
+
+    if (loading) return <Loading />
 
     return (
         <>
@@ -32,14 +82,14 @@ const ListBookings = () => {
                     <tbody className="text-sm font-light">
                         {bookings.map((item) => (
                             <tr key={item._id} className="border-b border-primary/10 bg-primary/5 even:bg-primary/10">
-                                <td className="p-2 min-w-45 pl-5">{item.user.name}</td>
-                                <td className="p-2">{item.show.movie.title}</td>
-                                <td className="p-2">{dateFormat(item.show.showDateTime)}</td>
-                                <td className="p-2">{item.bookedSeats.join(", ")}</td>
+                                <td className="p-2 min-w-45 pl-5">{item.user?.name || 'Unknown'}</td>
+                                <td className="p-2">{item.show?.movie?.title}</td>
+                                <td className="p-2">{dateFormat(item.show?.showDateTime)}</td>
+                                <td className="p-2">{(item.bookedSeats || []).join(", ")}</td>
                                 <td className="p-2">{currency}{item.amount}</td>
                                 <td className="p-2">
                                     <button
-                                        onClick={() => toggleBookingPaid(item._id)}
+                                        onClick={() => handleTogglePaid(item)}
                                         className={`px-3 py-1 rounded-full text-xs cursor-pointer ${item.isPaid ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}
                                     >
                                         {item.isPaid ? 'Paid' : 'Unpaid'}

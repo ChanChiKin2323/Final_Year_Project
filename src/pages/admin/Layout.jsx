@@ -1,11 +1,10 @@
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import AdminSidebar from '../../components/admin/AdminSidebar'
 import { Outlet } from 'react-router-dom'
-import { AdminProvider } from '../../context/AdminContext'
 
 const Layout = () => {
   return (
-    <AdminProvider>
+    <>
       <AdminNavbar />
       <div className='flex'>
         <AdminSidebar/>
@@ -13,7 +12,7 @@ const Layout = () => {
           <Outlet />
         </div>
       </div>
-    </AdminProvider>
+    </>
   )
 }
 
