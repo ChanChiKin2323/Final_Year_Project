@@ -8,8 +8,6 @@ import ThemeToggle from './ThemeToggle'
 const navLinks = [
   { label: 'Home', to: '/' },
   { label: 'Movies', to: '/movies' },
-  { label: 'Theaters', to: '/' },
-  { label: 'Releases', to: '/' },
   { label: 'Favourites', to: '/favourite' },
 ]
 

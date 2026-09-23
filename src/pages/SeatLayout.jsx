@@ -16,6 +16,10 @@ const SeatLayout = () => {
    const [selectedTime, setSelectedTime] = useState(null)
    const [show, setShow] = useState(null)
    const [occupiedSeats, setOccupiedSeats] = useState([])
+   const [showSummary, setShowSummary] = useState(false)
+
+   const currency = import.meta.env.VITE_CURRENCY || "$"
+   const totalPrice = selectedSeats.length * (selectedTime?.showPrice || 0)
 
    const navigate = useNavigate()
    const { axios, getToken, user } = useAppContext()
@@ -55,8 +59,17 @@ const SeatLayout = () => {
     if(!selectedSeats.includes(seatId) && selectedSeats.length > 4){
       return toast("You can only select 5 seats")
     }
+    setShowSummary(false)
     setSelectedSeats(prev => prev.includes(seatId) ? prev.filter(seat => seat !==
       seatId) : [...prev, seatId])
+   }
+
+   const handleProceed = () => {
+    if (!user) return toast.error('Please login to proceed')
+    if (!selectedTime || selectedSeats.length === 0) {
+      return toast.error('Please select time and seats')
+    }
+    setShowSummary(true)
    }
 
    const handleCheckout = async () => {
@@ -95,9 +108,12 @@ const SeatLayout = () => {
           return (
             <button key={seatId} onClick={() => handleSeatClick(seatId)}
             className={`h-8 w-8 cursor-pointer border text-[0.65rem] transition
-            ${isSelected ? "border-ink bg-ink text-canvas" : "border-ink/25 bg-surface hover:border-ink"}
-            ${isTaken && "cursor-not-allowed border-line bg-line text-muted line-through hover:border-line"}`}>
-              {seatId}
+            ${isTaken
+              ? "cursor-not-allowed border-red-700 bg-red-700 text-transparent hover:border-red-700"
+              : isSelected
+                ? "border-ink bg-ink text-canvas"
+                : "border-ink/25 bg-surface hover:border-ink"}`}>
+              {isTaken ? '' : seatId}
             </button>
           );
         })}
@@ -128,7 +144,7 @@ const SeatLayout = () => {
       </p>
       <div className="p-3">
         {(show.dateTime[date] || []).map((item) => (
-          <div key={item.time} onClick={()=> {setSelectedTime(item); setSelectedSeats([]); getOccupiedSeats(item.showId)}}
+          <div key={item.time} onClick={()=> {setSelectedTime(item); setSelectedSeats([]); setShowSummary(false); getOccupiedSeats(item.showId)}}
           className={`flex cursor-pointer items-center gap-2 px-4 py-2.5 transition
           ${selectedTime?.time === item.time ? "bg-ink text-canvas" : "hover:bg-accent-soft"}`}>
             <ClockIcon className="h-4 w-4"/>
@@ -171,17 +187,51 @@ const SeatLayout = () => {
           <span className='h-3.5 w-3.5 border border-ink bg-ink'/> Selected
         </span>
         <span className='flex items-center gap-2'>
-          <span className='h-3.5 w-3.5 border border-line bg-line'/> Taken ({occupiedSeats.length})
+          <span className='h-3.5 w-3.5 border border-red-700 bg-red-700'/> Taken ({occupiedSeats.length})
         </span>
       </div>
 
-      <button onClick={handleCheckout} className='mt-12 flex cursor-pointer items-center gap-2
+      <button onClick={handleProceed} className='mt-12 flex cursor-pointer items-center gap-2
       rounded-full bg-primary px-10 py-3.5 text-[0.72rem] uppercase tracking-[0.18em] text-canvas
       transition hover:bg-primary-dull'>
         Proceed to checkout
         <ArrowRightIcon strokeWidth={3} className="h-4 w-4"/>
       </button>
     </div>
+
+      {showSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setShowSummary(false)}>
+          <div className="w-full max-w-md rounded-lg bg-[#5A232A] p-6 text-[#F2EDE3] shadow-xl"
+          onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-6 text-center text-lg font-semibold">Order Summary</h2>
+
+            <div className="flex justify-between py-2 text-sm">
+              <span>Selected Seats:</span>
+              <span>{selectedSeats.join(", ")}</span>
+            </div>
+            <div className="flex justify-between py-2 text-sm">
+              <span>Total Number of Tickets:</span>
+              <span>{selectedSeats.length}</span>
+            </div>
+            <div className="mt-2 flex justify-between border-t border-[#F2EDE3]/40 pt-4 text-sm">
+              <span>Total Price:</span>
+              <span>{currency} {totalPrice}</span>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowSummary(false)}
+              className="cursor-pointer rounded-full border border-[#F2EDE3]/50 px-6 py-2 text-xs uppercase tracking-[0.16em]">
+                Back
+              </button>
+              <button onClick={handleCheckout}
+              className="cursor-pointer rounded-full bg-[#F2EDE3] px-6 py-2 text-xs uppercase tracking-[0.16em] text-[#5A232A]">
+                Confirm booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   </div>
 ) : (
   <Loading />

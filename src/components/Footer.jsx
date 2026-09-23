@@ -26,8 +26,8 @@ const Footer = () => {
           <p className='text-[0.7rem] uppercase tracking-[0.22em] text-muted'>Box office</p>
           <ul className='mt-4 space-y-2.5 text-sm text-muted'>
             <li>Open daily, 10:00 – 23:00</li>
-            <li>hello@cinemora.example</li>
-            <li>+1 (555) 019 8823</li>
+            <li>23234024@life.hkbu.edu.hk</li>
+            <li>(852)-90303747</li>
           </ul>
         </div>
       </div>
