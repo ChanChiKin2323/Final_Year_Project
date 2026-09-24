@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import timeFormat from "../lib/timeFormat"
 import dateFormat from "../lib/dateFormat"
 import { useAppContext } from "../context/AppContext"
@@ -10,6 +11,7 @@ const MyBookings = () => {
 
   const currency = import.meta.env.VITE_CURRENCY || "$"
   const { axios, getToken, user } = useAppContext()
+  const navigate = useNavigate()
 
   const [bookings, setBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -77,11 +79,15 @@ const MyBookings = () => {
             <div className="flex w-full flex-col justify-between gap-4 p-5 md:w-64">
               <div className='flex items-center justify-between gap-4'>
                 <p className="font-display text-3xl">{currency}{item.amount}</p>
-                {!item.isPaid && (
-                  <button className="rounded-full bg-accent px-5 py-2 text-[0.68rem] uppercase
+                {!item.isPaid ? (
+                  <button onClick={() => { navigate(`/payment/${item._id}`); scrollTo(0, 0) }}
+                  className="rounded-full bg-accent px-5 py-2 text-[0.68rem] uppercase
                   tracking-[0.16em] text-canvas transition hover:opacity-90 cursor-pointer">
                     Pay now
                   </button>
+                ) : (
+                  <span className="border border-primary px-3 py-1 text-[0.62rem] uppercase
+                  tracking-[0.16em] text-primary">Paid</span>
                 )}
               </div>
 

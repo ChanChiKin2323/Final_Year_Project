@@ -88,7 +88,7 @@ const SeatLayout = () => {
 
       if (data.success) {
         toast.success(data.message)
-        navigate('/my-bookings')
+        navigate(`/payment/${data.booking._id}`)
         scrollTo(0,0)
       } else {
         toast.error(data.message)
