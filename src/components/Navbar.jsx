@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboardIcon, MenuIcon, SearchIcon, TicketPlus, XIcon } from 'lucide-react'
+import { LayoutDashboardIcon, MenuIcon, PencilIcon, SearchIcon, TicketPlus, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useClerk, UserButton, useUser } from '@clerk/react'
+import toast from 'react-hot-toast'
 import Logo from './brand/Logo'
 import ThemeToggle from './ThemeToggle'
+import { useAppContext } from '../context/AppContext'
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -14,14 +16,42 @@ const navLinks = [
 const Navbar = () => {
 
   const [isOpen, setIsOpen] = useState(false)
+  const [renameOpen, setRenameOpen] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const {user} = useUser()
   const {openSignIn} = useClerk()
+  const { axios, getToken } = useAppContext()
 
   const navigate = useNavigate()
 
   const closeMenu = () => {
     scrollTo(0, 0)
     setIsOpen(false)
+  }
+
+  const openRename = () => {
+    setNameInput(user?.fullName || '')
+    setRenameOpen(true)
+  }
+
+  const saveName = async () => {
+    try {
+      setSavingName(true)
+      const { data } = await axios.post('/api/user/rename', { name: nameInput }, {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+      if (data.success) {
+        await user?.reload?.()
+        toast.success('Name updated')
+        setRenameOpen(false)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+    setSavingName(false)
   }
 
   return (
@@ -54,6 +84,7 @@ const Navbar = () => {
               <UserButton>
                 <UserButton.MenuItems>
                   <UserButton.Action label='My Bookings' labelIcon={<TicketPlus width={15}/>} onClick={()=> navigate('/my-bookings')}/>
+                  <UserButton.Action label='Rename' labelIcon={<PencilIcon width={15}/>} onClick={openRename}/>
                   <UserButton.Action label='Dashboard' labelIcon={<LayoutDashboardIcon width={15}/>} onClick={()=> navigate('/admin')}/>
                 </UserButton.MenuItems>
               </UserButton>
@@ -78,6 +109,32 @@ const Navbar = () => {
             </Link>
           ))}
         </nav>
+      )}
+
+      {renameOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setRenameOpen(false)}>
+          <form className="w-full max-w-sm border border-line bg-surface p-6"
+          onClick={(e) => e.stopPropagation()}
+          onSubmit={(e) => { e.preventDefault(); saveName() }}>
+            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-accent">Account</p>
+            <h2 className="mt-2 font-display text-2xl">Rename</h2>
+            <p className="mt-2 text-sm text-muted">This name is what appears on your bookings.</p>
+            <input value={nameInput} onChange={(e) => setNameInput(e.target.value)}
+            maxLength={40} autoFocus
+            className="mt-5 w-full border border-ink bg-canvas px-3 py-2.5 text-sm outline-none" />
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => setRenameOpen(false)}
+              className="cursor-pointer rounded-full border border-ink px-5 py-2 text-[0.68rem] uppercase tracking-[0.16em]">
+                Cancel
+              </button>
+              <button type="submit" disabled={savingName}
+              className="cursor-pointer rounded-full bg-primary px-5 py-2 text-[0.68rem] uppercase tracking-[0.16em] text-canvas disabled:opacity-60">
+                {savingName ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </header>
   )

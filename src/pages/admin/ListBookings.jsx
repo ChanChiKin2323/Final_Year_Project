@@ -5,6 +5,9 @@ import { RotateCcwIcon, Trash2Icon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../../context/AppContext'
 import Loading from '../../components/Loading'
+import Pagination from '../../components/Pagination'
+
+const PAGE_SIZE = 20
 
 const statusStyle = (item) => {
     if (item.isRefunded) return 'border-muted text-muted'
@@ -23,6 +26,13 @@ const ListBookings = () => {
     const { axios, getToken } = useAppContext()
     const [bookings, setBookings] = useState([])
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const pageCount = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE))
+    const visibleBookings = bookings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+    useEffect(() => {
+        if (page > pageCount) setPage(pageCount)
+    }, [page, pageCount])
 
     const getAllBookings = async () => {
         try {
@@ -97,7 +107,7 @@ const ListBookings = () => {
                         </tr>
                     </thead>
                     <tbody className="text-sm">
-                        {bookings.map((item) => (
+                        {visibleBookings.map((item) => (
                             <tr key={item._id} className="border-b border-line last:border-none hover:bg-accent-soft/50">
                                 <td className="min-w-45 p-4">{item.user?.name || 'Unknown'}</td>
                                 <td className="p-4">{item.show?.movie?.title}</td>
@@ -133,6 +143,7 @@ const ListBookings = () => {
                     <p className="p-10 text-center text-sm text-muted">No bookings found.</p>
                 )}
             </div>
+            <Pagination page={page} pageCount={pageCount} onChange={setPage} />
         </>
     )
 }

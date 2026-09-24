@@ -5,6 +5,9 @@ import dateFormat from '../../lib/dateFormat'
 import { useAppContext } from '../../context/AppContext'
 import imagePath from '../../lib/imagePath'
 import Loading from '../../components/Loading'
+import Pagination from '../../components/Pagination'
+
+const PAGE_SIZE = 8
 
 const Dashboard = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$'
@@ -16,6 +19,14 @@ const Dashboard = () => {
         totalUser: 0
     })
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+    const activeShows = dashboardData.activeShows || []
+    const pageCount = Math.max(1, Math.ceil(activeShows.length / PAGE_SIZE))
+    const visibleShows = activeShows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+    useEffect(() => {
+        if (page > pageCount) setPage(pageCount)
+    }, [page, pageCount])
 
     const dashboardCards = [
         { title: "Total Bookings", value: dashboardData.totalBookings || "0", icon: ChartLineIcon },
@@ -69,8 +80,8 @@ const Dashboard = () => {
                     No active shows yet. Add one from Add Shows.
                 </p>
             ) : (
-                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-                    {dashboardData.activeShows.map((show) => (
+                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    {visibleShows.map((show) => (
                         <div key={show._id} className="border border-line bg-surface transition hover:border-ink">
                             <img src={imagePath(show.movie?.poster_path)} alt={show.movie?.title}
                             className="aspect-[2/3] w-full object-cover" />
@@ -91,6 +102,7 @@ const Dashboard = () => {
                     ))}
                 </div>
             )}
+            <Pagination page={page} pageCount={pageCount} onChange={setPage} />
         </>
     )
 }

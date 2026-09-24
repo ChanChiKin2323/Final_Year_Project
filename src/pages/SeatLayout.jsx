@@ -81,7 +81,10 @@ const SeatLayout = () => {
 
       const { data } = await axios.post('/api/booking/create', {
         showId: selectedTime.showId,
-        selectedSeats
+        selectedSeats,
+        userName: user.fullName,
+        userEmail: user.primaryEmailAddress?.emailAddress,
+        userImage: user.imageUrl,
       }, {
         headers: { Authorization: `Bearer ${await getToken()}` }
       })

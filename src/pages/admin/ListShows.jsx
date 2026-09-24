@@ -5,6 +5,9 @@ import { CheckIcon, PencilIcon, Trash2Icon, XIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../../context/AppContext'
 import Loading from '../../components/Loading'
+import Pagination from '../../components/Pagination'
+
+const PAGE_SIZE = 20
 
 const ListShows = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$'
@@ -13,6 +16,13 @@ const ListShows = () => {
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState(null)
     const [priceInput, setPriceInput] = useState('')
+    const [page, setPage] = useState(1)
+    const pageCount = Math.max(1, Math.ceil(shows.length / PAGE_SIZE))
+    const visibleShows = shows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+    useEffect(() => {
+        if (page > pageCount) setPage(pageCount)
+    }, [page, pageCount])
 
     const getAllShows = async () => {
         try {
@@ -95,7 +105,7 @@ const ListShows = () => {
                         </tr>
                     </thead>
                     <tbody className="text-sm">
-                        {shows.map((show) => (
+                        {visibleShows.map((show) => (
                             <tr key={show._id} className="border-b border-line last:border-none hover:bg-accent-soft/50">
                                 <td className="min-w-45 p-4">{show.movie?.title}</td>
                                 <td className="p-4 text-muted">{dateFormat(show.showDateTime)}</td>
@@ -133,6 +143,7 @@ const ListShows = () => {
                     <p className="p-10 text-center text-sm text-muted">No shows found.</p>
                 )}
             </div>
+            <Pagination page={page} pageCount={pageCount} onChange={setPage} />
         </>
     )
 }
