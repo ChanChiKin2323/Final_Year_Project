@@ -1,10 +1,22 @@
 import { useEffect, useState } from 'react'
 import Title from '../../components/admin/Title'
 import dateFormat from '../../lib/dateFormat'
-import { Trash2Icon } from 'lucide-react'
+import { RotateCcwIcon, Trash2Icon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../../context/AppContext'
 import Loading from '../../components/Loading'
+
+const statusStyle = (item) => {
+    if (item.isRefunded) return 'border-muted text-muted'
+    if (item.isPaid) return 'border-primary text-primary'
+    return 'border-accent text-accent'
+}
+
+const statusLabel = (item) => {
+    if (item.isRefunded) return 'Refunded'
+    if (item.isPaid) return 'Paid'
+    return 'Unpaid'
+}
 
 const ListBookings = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$'
@@ -26,12 +38,16 @@ const ListBookings = () => {
         setLoading(false)
     }
 
-    const handleTogglePaid = async (item) => {
+    const handleDelete = async (item) => {
+        if (item.isPaid || item.isRefunded) {
+            return toast.error('Paid bookings must be refunded, not deleted')
+        }
         try {
-            const { data } = await axios.put(`/api/admin/booking/${item._id}`, { isPaid: !item.isPaid }, {
+            const { data } = await axios.delete(`/api/admin/booking/${item._id}`, {
                 headers: { Authorization: `Bearer ${await getToken()}` }
             })
             if (data.success) {
+                toast.success('Booking deleted')
                 getAllBookings()
             } else {
                 toast.error(data.message)
@@ -41,13 +57,13 @@ const ListBookings = () => {
         }
     }
 
-    const handleDelete = async (id) => {
+    const handleRefund = async (item) => {
         try {
-            const { data } = await axios.delete(`/api/admin/booking/${id}`, {
+            const { data } = await axios.post(`/api/admin/booking/${item._id}/refund`, {}, {
                 headers: { Authorization: `Bearer ${await getToken()}` }
             })
             if (data.success) {
-                toast.success('Booking deleted')
+                toast.success(data.message)
                 getAllBookings()
             } else {
                 toast.error(data.message)
@@ -89,16 +105,25 @@ const ListBookings = () => {
                                 <td className="p-4">{(item.bookedSeats || []).join(", ")}</td>
                                 <td className="p-4">{currency}{item.amount}</td>
                                 <td className="p-4">
-                                    <button
-                                        onClick={() => handleTogglePaid(item)}
-                                        className={`cursor-pointer border px-3 py-1 text-[0.62rem] uppercase tracking-[0.14em]
-                                        ${item.isPaid ? 'border-primary text-primary' : 'border-accent text-accent'}`}
-                                    >
-                                        {item.isPaid ? 'Paid' : 'Unpaid'}
-                                    </button>
+                                    <span className={`border px-3 py-1 text-[0.62rem] uppercase tracking-[0.14em] ${statusStyle(item)}`}>
+                                        {statusLabel(item)}
+                                    </span>
                                 </td>
                                 <td className="p-4">
-                                    <Trash2Icon onClick={() => handleDelete(item._id)} className="h-4 w-4 cursor-pointer hover:text-accent" />
+                                    {item.isRefunded ? (
+                                        <span className="text-[0.62rem] uppercase tracking-[0.14em] text-muted">Closed</span>
+                                    ) : item.isPaid ? (
+                                        <button onClick={() => handleRefund(item)}
+                                        className="flex cursor-pointer items-center gap-1.5 text-[0.62rem] uppercase tracking-[0.14em] text-accent hover:opacity-80"
+                                        title="Refund to the original user">
+                                            <RotateCcwIcon className="h-4 w-4" />
+                                            Refund
+                                        </button>
+                                    ) : (
+                                        <Trash2Icon onClick={() => handleDelete(item)}
+                                        className="h-4 w-4 cursor-pointer hover:text-accent"
+                                        title="Delete unpaid booking" />
+                                    )}
                                 </td>
                             </tr>
                         ))}

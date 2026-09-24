@@ -79,7 +79,10 @@ const MyBookings = () => {
             <div className="flex w-full flex-col justify-between gap-4 p-5 md:w-64">
               <div className='flex items-center justify-between gap-4'>
                 <p className="font-display text-3xl">{currency}{item.amount}</p>
-                {!item.isPaid ? (
+                {item.isRefunded ? (
+                  <span className="border border-muted px-3 py-1 text-[0.62rem] uppercase
+                  tracking-[0.16em] text-muted">Refunded</span>
+                ) : !item.isPaid ? (
                   <button onClick={() => { navigate(`/payment/${item._id}`); scrollTo(0, 0) }}
                   className="rounded-full bg-accent px-5 py-2 text-[0.68rem] uppercase
                   tracking-[0.16em] text-canvas transition hover:opacity-90 cursor-pointer">

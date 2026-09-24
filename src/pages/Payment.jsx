@@ -174,7 +174,8 @@ const Payment = () => {
       })
       if (data.success && data.booking) {
         setBooking(data.booking)
-        setStatus(data.booking.isPaid ? 'paid' : 'ready')
+        if (data.booking.isRefunded) setStatus('refunded')
+        else setStatus(data.booking.isPaid ? 'paid' : 'ready')
       } else {
         setStatus('notfound')
       }
@@ -231,17 +232,19 @@ const Payment = () => {
 
   if (status === 'loading') return <Loading />
 
-  if (status === 'signin' || status === 'notfound') {
+  if (status === 'signin' || status === 'notfound' || status === 'refunded') {
     return (
       <div className="mx-auto max-w-3xl px-5 py-32 text-center">
         <div className="border border-dashed border-line px-6 py-20">
           <h1 className="font-display text-3xl">
-            {status === 'signin' ? 'Sign in to pay' : 'Booking not found'}
+            {status === 'signin' ? 'Sign in to pay' : status === 'refunded' ? 'This booking was refunded' : 'Booking not found'}
           </h1>
           <p className="mt-3 text-sm text-muted">
             {status === 'signin'
               ? 'Log in with the account that made this booking.'
-              : 'It may belong to another account, or it was released after 10 minutes unpaid.'}
+              : status === 'refunded'
+                ? 'The sandbox payment was returned to the original account. These seats are back on sale.'
+                : 'It may belong to another account, or it was released after 10 minutes unpaid.'}
           </p>
           <button onClick={() => navigate('/my-bookings')} className="mt-8 cursor-pointer rounded-full
           border border-ink px-8 py-3 text-[0.7rem] uppercase tracking-[0.18em] transition hover:bg-ink hover:text-canvas">

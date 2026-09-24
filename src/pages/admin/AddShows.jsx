@@ -147,7 +147,7 @@ const AddShows = () => {
             <Title text1="Add" text2="Shows" />
 
             <p className="mt-8 text-[0.68rem] uppercase tracking-[0.24em] text-muted">Now playing movies</p>
-            <div className="no-scrollbar mt-5 overflow-x-auto pb-4">
+            <div className="mt-5 overflow-x-auto pb-4">
                 <div className="group flex w-max gap-5">
                     {nowPlayingMovies.map((movie) =>(
                         <div key={movie.id} onClick={()=> setSelectedMovie(movie.id)}
