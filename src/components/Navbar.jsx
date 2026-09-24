@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboardIcon, MenuIcon, PencilIcon, SearchIcon, TicketPlus, XIcon } from 'lucide-react'
+import { LayoutDashboardIcon, MenuIcon, PencilIcon, TicketPlus, XIcon } from 'lucide-react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useClerk, UserButton, useUser } from '@clerk/react'
@@ -115,11 +115,6 @@ const Navbar = () => {
         </nav>
 
         <div className='ml-auto flex items-center gap-3'>
-          <button className='hidden h-9 w-9 place-items-center rounded-full border border-line
-          transition hover:border-ink sm:grid' aria-label='Search'>
-            <SearchIcon className='h-4 w-4'/>
-          </button>
-
           {
             !user ? (
               <button onClick={openSignIn} className='px-5 py-2 sm:px-7 sm:py-2.5 bg-primary

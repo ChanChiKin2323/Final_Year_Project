@@ -134,9 +134,6 @@ const AddShows = () => {
                         Add Shows needs a TMDB Read Access Token in <code>backend/.env</code> as <code>TMDB_API_KEY</code>.
                         Get it from themoviedb.org → Settings → API. Use the long token that starts with <code>eyJ</code>, then restart <code>npm run server</code>.
                     </p>
-                    <p className="mt-3 text-sm leading-relaxed text-muted">
-                        If the message says this is a customer account, add that Google email to <code>ADMIN_EMAILS</code> in <code>backend/.env</code>, then restart the server.
-                    </p>
                 </div>
             </>
         )
