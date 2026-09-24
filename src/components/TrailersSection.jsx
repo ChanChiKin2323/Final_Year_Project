@@ -3,9 +3,19 @@ import ReactPlayer from 'react-player'
 import { PlayCircleIcon } from 'lucide-react'
 import { trailers } from '../data/trailers'
 
+const pickFour = (list) => {
+    const copy = [...list]
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+    return copy.slice(0, 4)
+}
+
 const TrailersSection = () => {
 
-    const [currentTrailer, setCurrentTrailer] = useState(trailers[0])
+    const [playlist] = useState(() => pickFour(trailers))
+    const [currentTrailer, setCurrentTrailer] = useState(() => playlist[0])
 
   return (
     // This band stays dark in both themes, so the colours here are fixed on purpose.
@@ -17,7 +27,7 @@ const TrailersSection = () => {
                 <h2 className='mt-3 font-display text-3xl md:text-4xl'>Watch before you book</h2>
 
                 <ul className='mt-8 border-y border-[#F2EDE3]/15'>
-                    {trailers.map((trailer, index) => {
+                    {playlist.map((trailer, index) => {
                         const isActive = trailer.videoUrl === currentTrailer.videoUrl
                         return (
                             <li key={trailer.videoUrl} className='border-b border-[#F2EDE3]/15 last:border-none'>

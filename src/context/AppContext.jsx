@@ -10,6 +10,7 @@ export const AppContext = createContext(null)
 export const AppProvider = ({ children }) => {
     const [shows, setShows] = useState([])
     const [favoriteMovies, setFavoriteMovies] = useState([])
+    const [role, setRole] = useState(null)
     const { user } = useUser()
     const { getToken } = useAuth()
 
@@ -49,6 +50,27 @@ export const AppProvider = ({ children }) => {
         }
     }, [user])
 
+    const refreshRole = async () => {
+        if (!user) {
+            setRole('guest')
+            return
+        }
+        try {
+            const { data } = await axios.get('/api/user/role', {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            setRole(data.role === 'admin' ? 'admin' : 'user')
+        } catch (error) {
+            console.error(error)
+            setRole('user')
+        }
+    }
+
+    useEffect(() => {
+        if (user === undefined) return
+        refreshRole()
+    }, [user])
+
     const value = {
         axios,
         fetchShows,
@@ -57,6 +79,8 @@ export const AppProvider = ({ children }) => {
         getToken,
         favoriteMovies,
         fetchFavoriteMovies,
+        role,
+        refreshRole,
     }
 
     return (

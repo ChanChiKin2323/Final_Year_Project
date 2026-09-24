@@ -1,20 +1,25 @@
-import { LayoutDashboardIcon, ListCollapseIcon, ListIcon, PlusSquareIcon } from 'lucide-react'
+import { InboxIcon, LayoutDashboardIcon, ListCollapseIcon, ListIcon, PlusSquareIcon } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useUser } from '@clerk/react'
 
 const AdminSidebar = () => {
 
-    const user = {
-        firstName: 'Admin',
-        lastName: 'User',
-    }
-
-    const initials = `${user.firstName[0]}${user.lastName[0]}`
+    const { user } = useUser()
+    const name = user?.fullName || 'Admin'
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase()
 
     const adminNavlinks = [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboardIcon },
         { name: 'Add Shows', path: '/admin/add-shows', icon: PlusSquareIcon },
         { name: 'List Shows', path: '/admin/list-shows', icon: ListIcon },
         { name: 'List Bookings', path: '/admin/list-bookings', icon: ListCollapseIcon },
+        { name: 'Handle Request', path: '/admin/requests', icon: InboxIcon },
     ]
 
   return (
@@ -22,12 +27,17 @@ const AdminSidebar = () => {
     bg-surface pt-8 text-sm md:max-w-60'>
 
         <div className='flex flex-col items-center px-3'>
-            <div className='grid h-11 w-11 place-items-center rounded-full bg-primary
-            text-[0.7rem] tracking-[0.1em] text-canvas md:h-14 md:w-14 md:text-sm'>
-                {initials}
-            </div>
-            <p className='mt-3 text-[0.68rem] uppercase tracking-[0.2em] text-muted max-md:hidden'>
-                {user.firstName} {user.lastName}
+            {user?.imageUrl ? (
+                <img src={user.imageUrl} alt={name}
+                className='h-11 w-11 rounded-full object-cover md:h-14 md:w-14' />
+            ) : (
+                <div className='grid h-11 w-11 place-items-center rounded-full bg-primary
+                text-[0.7rem] tracking-[0.1em] text-canvas md:h-14 md:w-14 md:text-sm'>
+                    {initials}
+                </div>
+            )}
+            <p className='mt-3 text-center text-[0.68rem] uppercase tracking-[0.2em] text-muted max-md:hidden'>
+                {name}
             </p>
         </div>
 

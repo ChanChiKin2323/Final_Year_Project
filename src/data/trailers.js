@@ -1,10 +1,14 @@
-// Trailer playlist for the home page. Thumbnails are derived from the video id,
-// so nothing has to be stored locally.
+// Home-page trailers for the films currently on the Movies page.
+// Each id is the official YouTube trailer listed for that title on TMDB.
 const videos = [
-  { id: 'Way9Dexny3w', title: 'Dune: Part Two' },
-  { id: 'uYPbbksJxIg', title: 'Oppenheimer' },
-  { id: 'mqqft2x_Aa4', title: 'The Batman' },
-  { id: 'zSWdZVtXT7E', title: 'Interstellar' },
+  { id: 'H-43VeYGiPM', title: 'Coyote vs. Acme' },
+  { id: 'LW6dpj1uCK8', title: 'Colony' },
+  { id: '3oB9AxspVow', title: 'The End of Oak Street' },
+  { id: 'ZSdOwt-G49w', title: 'Minions & Monsters' },
+  { id: 'FKSdXH89jbo', title: 'Mutiny' },
+  { id: 'f_bKjZeJBBI', title: 'The Odyssey' },
+  { id: '8PAy3i9uU0A', title: 'One Last Shot' },
+  { id: 'mNd1gb19A-c', title: 'Resident Evil' },
 ]
 
 export const trailers = videos.map(({ id, title }) => ({

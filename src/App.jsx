@@ -1,5 +1,7 @@
 import Navbar from './components/Navbar'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useAppContext } from './context/AppContext'
+import Loading from './components/Loading'
 import Home from './pages/Home'
 import Movies from './pages/Movies'
 import MovieDetails from './pages/MovieDetails'
@@ -14,6 +16,21 @@ import Dashboard from './pages/admin/Dashboard'
 import AddShows from './pages/admin/AddShows'
 import ListShows from './pages/admin/ListShows'
 import ListBookings from './pages/admin/ListBookings'
+import HandleRequests from './pages/admin/HandleRequests'
+
+const CustomerOnly = ({ children }) => {
+  const { role } = useAppContext()
+  if (role === null) return <Loading />
+  if (role === 'admin') return <Navigate to="/admin" replace />
+  return children
+}
+
+const CinemaOnly = () => {
+  const { role } = useAppContext()
+  if (role === null) return <Loading />
+  if (role !== 'admin') return <Navigate to="/" replace />
+  return <Layout />
+}
 
 const App = () => {
   
@@ -24,18 +41,19 @@ const App = () => {
       <Toaster />
       {!isAdminRoute && <Navbar/>}
       <Routes>
-        <Route path='/' element={<Home/>} />
-        <Route path='/movies' element={<Movies/>} />
-        <Route path='/movies/:id' element={<MovieDetails/>} />
-        <Route path='/movies/:id/:date' element={<SeatLayout/>} />
-        <Route path='/my-bookings' element={<MyBookings/>} />
-        <Route path='/payment/:bookingId' element={<Payment/>} />
-        <Route path='/favourite' element={<Favourite/>} />
-        <Route path='/admin/*' element={<Layout/>}>
+        <Route path='/' element={<CustomerOnly><Home/></CustomerOnly>} />
+        <Route path='/movies' element={<CustomerOnly><Movies/></CustomerOnly>} />
+        <Route path='/movies/:id' element={<CustomerOnly><MovieDetails/></CustomerOnly>} />
+        <Route path='/movies/:id/:date' element={<CustomerOnly><SeatLayout/></CustomerOnly>} />
+        <Route path='/my-bookings' element={<CustomerOnly><MyBookings/></CustomerOnly>} />
+        <Route path='/payment/:bookingId' element={<CustomerOnly><Payment/></CustomerOnly>} />
+        <Route path='/favourite' element={<CustomerOnly><Favourite/></CustomerOnly>} />
+        <Route path='/admin/*' element={<CinemaOnly/>}>
           <Route index element={<Dashboard/>} />
           <Route path='add-shows' element={<AddShows/>} />
           <Route path='list-shows' element={<ListShows/>} />
           <Route path='list-bookings' element={<ListBookings/>} />
+          <Route path='requests' element={<HandleRequests/>} />
         </Route>
       </Routes>
       {!isAdminRoute && <Footer />}

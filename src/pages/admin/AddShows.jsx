@@ -135,7 +135,7 @@ const AddShows = () => {
                         Get it from themoviedb.org → Settings → API. Use the long token that starts with <code>eyJ</code>, then restart <code>npm run server</code>.
                     </p>
                     <p className="mt-3 text-sm leading-relaxed text-muted">
-                        If the message is &quot;not authorized&quot;, open Clerk Dashboard → Users → your account → Metadata → Private, and set <code>{`{ "role": "admin" }`}</code>.
+                        If the message says this is a customer account, add that Google email to <code>ADMIN_EMAILS</code> in <code>backend/.env</code>, then restart the server.
                     </p>
                 </div>
             </>
