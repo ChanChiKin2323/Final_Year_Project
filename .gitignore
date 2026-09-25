@@ -1,3 +1,13 @@
+# Dependencies and build output
+node_modules
+frontend/dist
+frontend/dist-ssr
+dist
+dist-ssr
+
+# Secrets. The frontend .env is already tracked; the backend file must stay local.
+backend/.env
+
 # Logs
 logs
 *.log
@@ -6,10 +16,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
 *.local
 
 # Editor directories and files
