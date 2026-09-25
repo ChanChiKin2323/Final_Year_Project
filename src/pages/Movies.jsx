@@ -8,11 +8,21 @@ const PAGE_SIZE = 8
 const Movies = () => {
   const { shows } = useAppContext()
   const [query, setQuery] = useState('')
+  const [genre, setGenre] = useState('')
   const [page, setPage] = useState(1)
   const needle = query.trim().toLowerCase()
-  const filtered = needle
-    ? shows.filter((movie) => movie.title?.toLowerCase().includes(needle))
-    : shows
+  const genres = [...shows.flatMap((movie) => (movie.genres || []).map((item) => item.name).filter(Boolean))
+    .reduce((names, name) => {
+      const key = name.toLowerCase()
+      const current = names.get(key)
+      if (!current || (name !== key && current === current.toLowerCase())) names.set(key, name)
+      return names
+    }, new Map()).values()].sort((a, b) => a.localeCompare(b))
+  const filtered = shows.filter((movie) => {
+    const titleMatches = !needle || movie.title?.toLowerCase().includes(needle)
+    const genreMatches = !genre || (movie.genres || []).some((item) => item.name?.toLowerCase() === genre.toLowerCase())
+    return titleMatches && genreMatches
+  })
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -29,19 +39,38 @@ const Movies = () => {
           <h1 className='mt-3 font-display text-4xl md:text-5xl'>Now showing</h1>
         </div>
         <div className='flex flex-col items-start gap-3 sm:items-end'>
-          <label className='flex items-center gap-3 border border-line bg-surface px-4 py-2.5'>
-            <span className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Search</span>
-            <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value)
-                setPage(1)
-              }}
-              placeholder='Find a title'
-              aria-label='Search movies'
-              className='w-40 bg-transparent text-sm outline-none placeholder:text-muted md:w-52'
-            />
-          </label>
+          <div className='flex flex-wrap items-center gap-3'>
+            <label className='flex items-center gap-3 border border-line bg-surface px-4 py-2.5'>
+              <span className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Search</span>
+              <input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value)
+                  setPage(1)
+                }}
+                placeholder='Find a title'
+                aria-label='Search movies'
+                className='w-40 bg-transparent text-sm outline-none placeholder:text-muted md:w-52'
+              />
+            </label>
+            <label className='flex items-center gap-3 border border-line bg-surface px-4 py-2.5'>
+              <span className='text-[0.62rem] uppercase tracking-[0.18em] text-muted'>Genre</span>
+              <select
+                value={genre}
+                onChange={(event) => {
+                  setGenre(event.target.value)
+                  setPage(1)
+                }}
+                aria-label='Filter by genre'
+                className='bg-transparent text-sm outline-none'
+              >
+                <option value=''>All</option>
+                {genres.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
           <p className='text-[0.7rem] uppercase tracking-[0.2em] text-muted'>
             {filtered.length} {filtered.length === 1 ? 'title' : 'titles'}
           </p>
@@ -59,10 +88,10 @@ const Movies = () => {
         </>
       ) : (
         <div className='mt-10 border border-dashed border-line px-6 py-24 text-center'>
-          <h2 className='font-display text-2xl'>{needle ? 'No matching titles' : 'No movies available'}</h2>
+          <h2 className='font-display text-2xl'>{needle || genre ? 'No matching titles' : 'No movies available'}</h2>
           <p className='mt-3 text-sm text-muted'>
-            {needle
-              ? `Nothing on the schedule matches “${query.trim()}”.`
+            {needle || genre
+              ? 'Nothing on the schedule matches that search and genre.'
               : 'Shows added from the admin dashboard will appear here.'}
           </p>
         </div>

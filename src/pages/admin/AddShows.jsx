@@ -195,7 +195,7 @@ const AddShows = () => {
                                         <StarIcon className="h-3 w-3 fill-accent text-accent" />
                                         {Number(movie.vote_average).toFixed(1)}
                                     </p>
-                                    <p>{kConverter(movie.vote_count)} votes</p>
+                                    <p>{kConverter(movie.vote_count)} {movie.vote_count === 1 ? 'vote' : 'votes'}</p>
                                 </div>
                                 {selectedMovie === movie.id && (
                                     <div className="absolute right-2 top-2 grid h-6 w-6 place-items-center bg-primary">

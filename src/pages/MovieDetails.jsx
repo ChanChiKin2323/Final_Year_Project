@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-import { Heart, PlayCircleIcon, StarIcon } from "lucide-react"
+import { Heart, StarIcon } from "lucide-react"
 import timeFormat from "../lib/timeFormat"
 import DataSelect from "../components/DateSelect"
 import { useAppContext } from "../context/AppContext"
@@ -12,7 +12,9 @@ import Loading from "../components/Loading"
 const MovieDetails = () => {
   const {id} = useParams()
   const [show, setShow] = useState(null)
-  const { axios, shows, user, getToken, favoriteMovies, fetchFavoriteMovies } = useAppContext()
+  const [hoverStars, setHoverStars] = useState(0)
+  const [savingVote, setSavingVote] = useState(false)
+  const { axios, shows, user, getToken, favoriteMovies, fetchFavoriteMovies, fetchShows } = useAppContext()
 
   const getShow = async ()=>{
     try {
@@ -20,7 +22,8 @@ const MovieDetails = () => {
       if (data.success && data.movie) {
         setShow({
           movie: data.movie,
-          dateTime: data.dateTime
+          dateTime: data.dateTime,
+          rating: data.rating || { score: 0, count: 0, mine: 0 },
         })
       } else {
         setShow(false)
@@ -29,6 +32,26 @@ const MovieDetails = () => {
       console.error(error)
       setShow(false)
     }
+  }
+
+  const handleVote = async (stars) => {
+    if (!user) return toast.error('Sign in to rate this film')
+    try {
+      setSavingVote(true)
+      const { data } = await axios.post(`/api/show/${id}/vote`, { stars }, {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      })
+      if (data.success) {
+        setShow((prev) => prev ? { ...prev, rating: data.rating } : prev)
+        fetchShows()
+        toast.success(data.message)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message)
+    }
+    setSavingVote(false)
   }
 
   const handleFavorite = async () => {
@@ -73,9 +96,29 @@ useEffect(()=>{
           <p className='text-[0.7rem] uppercase tracking-[0.3em] text-accent'>English · Feature</p>
           <h1 className='mt-4 font-display text-4xl leading-[1.08] md:text-5xl'>{show.movie.title}</h1>
 
-          <div className='mt-4 flex items-center gap-2 text-sm text-muted'>
-            <StarIcon className='h-4 w-4 fill-accent text-accent'/>
-            {Number(show.movie.vote_average).toFixed(1)} user rating
+          <div className='mt-4 flex flex-wrap items-center gap-4 text-sm text-muted'>
+            <span className='flex items-center gap-2'>
+              <StarIcon className='h-4 w-4 fill-accent text-accent'/>
+              {Number(show.rating?.score || 0).toFixed(1)}
+              <span>
+                {show.rating?.count
+                  ? `from ${show.rating.count} ${show.rating.count === 1 ? 'vote' : 'votes'}`
+                  : 'no votes yet'}
+              </span>
+            </span>
+            <span className='flex items-center gap-1' onMouseLeave={() => setHoverStars(0)}>
+              {[1, 2, 3, 4, 5].map((star) => {
+                const active = star <= (hoverStars || show.rating?.mine || 0)
+                return (
+                  <button key={star} type='button' disabled={savingVote} aria-label={`${star} star`}
+                  onMouseEnter={() => setHoverStars(star)}
+                  onClick={() => handleVote(star)}
+                  className='cursor-pointer disabled:opacity-60'>
+                    <StarIcon className={`h-5 w-5 ${active ? 'fill-accent text-accent' : 'text-muted'}`} />
+                  </button>
+                )
+              })}
+            </span>
           </div>
 
           <dl className='mt-8 grid max-w-2xl grid-cols-2 gap-px border border-line bg-line sm:grid-cols-3'>
@@ -100,12 +143,6 @@ useEffect(()=>{
             uppercase tracking-[0.18em] text-canvas transition hover:bg-primary-dull cursor-pointer'>
               Buy tickets
             </a>
-            <button className='flex items-center gap-2 rounded-full border border-ink px-8 py-3.5
-            text-[0.72rem] uppercase tracking-[0.18em] transition hover:bg-ink hover:text-canvas
-            cursor-pointer'>
-              <PlayCircleIcon className='h-4 w-4'/>
-              Watch trailer
-            </button>
           </div>
         </div>
       </div>

@@ -65,6 +65,17 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
+/* The open list stays a light menu, so its text must stay dark to be readable. */
+.dark select {
+  color-scheme: light;
+  color: var(--color-ink);
+}
+
+.dark select option {
+  background-color: #F2EDE3;
+  color: #14120F;
+}
+
 input[type="datetime-local"]::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
