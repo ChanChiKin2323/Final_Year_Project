@@ -65,8 +65,16 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
-.dark ::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
 }
 
 @keyframes marquee-scroll {

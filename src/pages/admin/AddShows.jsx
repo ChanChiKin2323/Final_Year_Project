@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Loading from '../../components/Loading'
 import Title from '../../components/admin/Title'
-import { CheckIcon, DeleteIcon, StarIcon } from 'lucide-react'
+import { CalendarIcon, CheckIcon, DeleteIcon, PlusIcon, StarIcon } from 'lucide-react'
 import kConverter from '../../lib/kConverter'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../../context/AppContext'
@@ -19,6 +20,11 @@ const AddShows = () => {
     const [addingShow, setAddingShow] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [movieFormOpen, setMovieFormOpen] = useState(false)
+    const [savingMovie, setSavingMovie] = useState(false)
+    const [movieForm, setMovieForm] = useState({
+        title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '',
+    })
 
     const fetchNowPlayingMovies = async () => {
         try {
@@ -45,6 +51,38 @@ const AddShows = () => {
         const now = new Date()
         const pad = (n) => String(n).padStart(2, '0')
         return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+    }
+
+    const setMovieField = (key) => (event) => {
+        setMovieForm((prev) => ({ ...prev, [key]: event.target.value }))
+    }
+
+    const saveCustomMovie = async () => {
+        if (!movieForm.title.trim()) return toast.error('Title is required')
+        if (!movieForm.overview.trim()) return toast.error('Overview is required')
+        if (!movieForm.releaseDate) return toast.error('Release date is required')
+        if (!movieForm.runtime.trim()) return toast.error('Runtime is required')
+        if (!movieForm.poster.trim()) return toast.error('Poster link is required')
+
+        try {
+            setSavingMovie(true)
+            const { data } = await axios.post('/api/show/custom', movieForm, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (data.success) {
+                setNowPlayingMovies((prev) => [data.movie, ...prev.filter((movie) => movie.id !== data.movie.id)])
+                setSelectedMovie(data.movie.id)
+                setMovieForm({ title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '' })
+                setMovieFormOpen(false)
+                setError('')
+                toast.success(data.message)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message)
+        }
+        setSavingMovie(false)
     }
 
     const handleDateTimeAdd = () => {
@@ -124,28 +162,26 @@ const AddShows = () => {
 
     if (loading) return <Loading />
 
-    if (error || nowPlayingMovies.length === 0) {
-        return (
-            <>
-                <Title text1="Add" text2="Shows" />
-                <div className="mt-8 max-w-2xl border border-dashed border-line bg-surface p-8">
-                    <p className="font-display text-xl">{error || 'No movies loaded.'}</p>
-                    <p className="mt-5 text-sm leading-relaxed text-muted">
-                        Add Shows needs a TMDB Read Access Token in <code>backend/.env</code> as <code>TMDB_API_KEY</code>.
-                        Get it from themoviedb.org → Settings → API. Use the long token that starts with <code>eyJ</code>, then restart <code>npm run server</code>.
-                    </p>
-                </div>
-            </>
-        )
-    }
-
     return (
         <>
             <Title text1="Add" text2="Shows" />
 
             <p className="mt-8 text-[0.68rem] uppercase tracking-[0.24em] text-muted">Now playing movies</p>
+            {error && nowPlayingMovies.length === 0 && (
+                <p className="mt-4 max-w-2xl text-sm text-muted">{error}</p>
+            )}
             <div className="mt-5 overflow-x-auto pb-4">
                 <div className="group flex w-max gap-5">
+                    <button type="button" onClick={() => setMovieFormOpen(true)}
+                    className="w-40 cursor-pointer border border-dashed border-line bg-surface text-left transition hover:border-ink">
+                        <div className="grid aspect-[2/3] place-items-center">
+                            <PlusIcon className="h-10 w-10" strokeWidth={1.4} />
+                        </div>
+                        <div className="p-3">
+                            <p className="truncate text-sm">Add movie</p>
+                            <p className="mt-1 text-[0.65rem] uppercase tracking-[0.12em] text-muted">New title</p>
+                        </div>
+                    </button>
                     {nowPlayingMovies.map((movie) =>(
                         <div key={movie.id} onClick={()=> setSelectedMovie(movie.id)}
                         className={`w-40 cursor-pointer border bg-surface transition
@@ -189,9 +225,12 @@ const AddShows = () => {
                 <div>
                     <label className="block text-[0.65rem] uppercase tracking-[0.18em] text-muted">Select date and time</label>
                     <div className="mt-2 flex border border-ink bg-surface">
-                        <input type="datetime-local" min={earliestDateTime()} value={dateTimeInput}
-                        onChange={(e) => setDateTimeInput(e.target.value)}
-                        className="w-full bg-transparent px-3 py-2.5 text-sm outline-none" />
+                        <div className="relative min-w-0 flex-1">
+                            <input type="datetime-local" min={earliestDateTime()} value={dateTimeInput}
+                            onChange={(e) => setDateTimeInput(e.target.value)}
+                            className="relative w-full bg-transparent px-3 py-2.5 pr-9 text-sm outline-none" />
+                            <CalendarIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink" />
+                        </div>
                         <button onClick={handleDateTimeAdd} className="shrink-0 cursor-pointer bg-ink px-4
                         text-[0.65rem] uppercase tracking-[0.16em] text-canvas transition hover:bg-primary">
                             Add time
@@ -227,6 +266,67 @@ const AddShows = () => {
             transition hover:bg-primary-dull disabled:opacity-60">
                 {addingShow ? 'Adding…' : 'Add show'}
             </button>
+
+            {movieFormOpen && createPortal(
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4"
+                onClick={() => setMovieFormOpen(false)}>
+                    <form className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-surface p-6"
+                    onClick={(event) => event.stopPropagation()}
+                    onSubmit={(event) => { event.preventDefault(); saveCustomMovie() }}>
+                        <p className="text-[0.68rem] uppercase tracking-[0.24em] text-accent">Catalogue</p>
+                        <h2 className="mt-2 font-display text-2xl">Add movie</h2>
+                        <p className="mt-2 text-sm text-muted">Title, overview, release date, runtime, and a poster link are required.</p>
+
+                        <label className="mt-4 block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                            Title
+                            <input value={movieForm.title} onChange={setMovieField('title')}
+                            className="mt-1.5 w-full border border-ink bg-canvas px-3 py-2 text-sm normal-case tracking-normal text-ink outline-none" />
+                        </label>
+                        <label className="mt-3 block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                            Overview
+                            <textarea value={movieForm.overview} onChange={setMovieField('overview')} rows={3}
+                            className="mt-1.5 w-full border border-ink bg-canvas px-3 py-2 text-sm normal-case tracking-normal text-ink outline-none" />
+                        </label>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label className="block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                                Release date
+                                <span className="relative mt-1.5 block">
+                                    <input type="date" value={movieForm.releaseDate} onChange={setMovieField('releaseDate')}
+                                    className="relative w-full border border-ink bg-canvas px-3 py-2 pr-9 text-sm normal-case tracking-normal text-ink outline-none" />
+                                    <CalendarIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink" />
+                                </span>
+                            </label>
+                            <label className="block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                                Runtime (minutes)
+                                <input type="number" min="1" value={movieForm.runtime} onChange={setMovieField('runtime')}
+                                className="mt-1.5 w-full border border-ink bg-canvas px-3 py-2 text-sm normal-case tracking-normal text-ink outline-none" />
+                            </label>
+                        </div>
+                        <label className="mt-3 block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                            Poster link
+                            <input value={movieForm.poster} onChange={setMovieField('poster')} placeholder="https://"
+                            className="mt-1.5 w-full border border-ink bg-canvas px-3 py-2 text-sm normal-case tracking-normal text-ink outline-none" />
+                        </label>
+                        <label className="mt-3 block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
+                            Genre
+                            <input value={movieForm.genre} onChange={setMovieField('genre')} placeholder="Optional"
+                            className="mt-1.5 w-full border border-ink bg-canvas px-3 py-2 text-sm normal-case tracking-normal text-ink outline-none" />
+                        </label>
+
+                        <div className="mt-5 flex justify-end gap-3">
+                            <button type="button" onClick={() => setMovieFormOpen(false)}
+                            className="cursor-pointer border border-ink px-4 py-2 text-[0.65rem] uppercase tracking-[0.16em]">
+                                Cancel
+                            </button>
+                            <button type="submit" disabled={savingMovie}
+                            className="cursor-pointer bg-primary px-4 py-2 text-[0.65rem] uppercase tracking-[0.16em] text-canvas disabled:opacity-60">
+                                {savingMovie ? 'Saving…' : 'Save'}
+                            </button>
+                        </div>
+                    </form>
+                </div>,
+                document.body
+            )}
         </>
     )
 }
