@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import { Heart, StarIcon } from "lucide-react"
 import timeFormat from "../lib/timeFormat"
+import CommentSection from "../components/CommentSection"
 import DataSelect from "../components/DateSelect"
 import { useAppContext } from "../context/AppContext"
 import imagePath from "../lib/imagePath"
@@ -18,12 +19,15 @@ const MovieDetails = () => {
 
   const getShow = async ()=>{
     try {
-      const { data } = await axios.get(`/api/show/${id}`)
+      const headers = {}
+      if (user) headers.Authorization = `Bearer ${await getToken()}`
+      const { data } = await axios.get(`/api/show/${id}`, { headers })
       if (data.success && data.movie) {
         setShow({
           movie: data.movie,
           dateTime: data.dateTime,
           rating: data.rating || { score: 0, count: 0, mine: 0 },
+          comments: data.comments || [],
         })
       } else {
         setShow(false)
@@ -42,7 +46,11 @@ const MovieDetails = () => {
         headers: { Authorization: `Bearer ${await getToken()}` }
       })
       if (data.success) {
-        setShow((prev) => prev ? { ...prev, rating: data.rating } : prev)
+        setShow((prev) => prev ? {
+          ...prev,
+          rating: data.rating,
+          comments: data.comments || prev.comments,
+        } : prev)
         fetchShows()
         toast.success(data.message)
       } else {
@@ -71,7 +79,7 @@ const MovieDetails = () => {
 
 useEffect(()=>{
   getShow()
-},[id])
+},[id, user?.id])
 
   const isFavorite = favoriteMovies.find(movie => movie._id === id)
 
@@ -167,6 +175,17 @@ useEffect(()=>{
       )}
 
       <DataSelect dateTime={show.dateTime} id={id}/>
+
+      <CommentSection
+        key={`${id}-${user?.id || 'guest'}`}
+        movieId={id}
+        comments={show.comments || []}
+        myStars={show.rating?.mine || 0}
+        onSaved={(data) => {
+          setShow((prev) => prev ? { ...prev, rating: data.rating, comments: data.comments || [] } : prev)
+          fetchShows()
+        }}
+      />
 
       <p className='mt-20 border-b border-line pb-4 text-[0.7rem] uppercase tracking-[0.24em] text-muted'>
         You may also like
