@@ -21,6 +21,7 @@ const AddShows = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [movieFormOpen, setMovieFormOpen] = useState(false)
+    const [editingMovieId, setEditingMovieId] = useState(null)
     const [savingMovie, setSavingMovie] = useState(false)
     const [movieForm, setMovieForm] = useState({
         title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '',
@@ -57,6 +58,41 @@ const AddShows = () => {
         setMovieForm((prev) => ({ ...prev, [key]: event.target.value }))
     }
 
+    const closeMovieForm = () => {
+        setMovieFormOpen(false)
+        setEditingMovieId(null)
+        setMovieForm({ title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '' })
+    }
+
+    const openUpdate = async () => {
+        if (!selectedMovie) return toast.error('Select a movie to update')
+        try {
+            setSavingMovie(true)
+            const { data } = await axios.get(`/api/show/editable/${selectedMovie}`, {
+                headers: { Authorization: `Bearer ${await getToken()}` }
+            })
+            if (!data.success) {
+                toast.error(data.message)
+                setSavingMovie(false)
+                return
+            }
+            const movie = data.movie
+            setMovieForm({
+                title: movie.title || '',
+                overview: movie.overview || '',
+                releaseDate: String(movie.releaseDate || '').slice(0, 10),
+                runtime: movie.runtime ? String(movie.runtime) : '',
+                poster: imagePath(movie.poster),
+                genre: movie.genre || '',
+            })
+            setEditingMovieId(selectedMovie)
+            setMovieFormOpen(true)
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message)
+        }
+        setSavingMovie(false)
+    }
+
     const saveCustomMovie = async () => {
         if (!movieForm.title.trim()) return toast.error('Title is required')
         if (!movieForm.overview.trim()) return toast.error('Overview is required')
@@ -66,15 +102,34 @@ const AddShows = () => {
 
         try {
             setSavingMovie(true)
-            const { data } = await axios.post('/api/show/custom', movieForm, {
-                headers: { Authorization: `Bearer ${await getToken()}` }
-            })
+            const request = editingMovieId
+                ? axios.put(`/api/show/editable/${editingMovieId}`, movieForm, {
+                    headers: { Authorization: `Bearer ${await getToken()}` }
+                })
+                : axios.post('/api/show/custom', movieForm, {
+                    headers: { Authorization: `Bearer ${await getToken()}` }
+                })
+            const { data } = await request
             if (data.success) {
-                setNowPlayingMovies((prev) => [data.movie, ...prev.filter((movie) => movie.id !== data.movie.id)])
-                setSelectedMovie(data.movie.id)
-                setMovieForm({ title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '' })
-                setMovieFormOpen(false)
+                if (editingMovieId) {
+                    setNowPlayingMovies((prev) => prev.map((movie) => (
+                        String(movie.id) === String(data.movie.id)
+                            ? {
+                                ...movie,
+                                title: data.movie.title,
+                                poster_path: data.movie.poster_path,
+                                backdrop_path: data.movie.backdrop_path,
+                                release_date: data.movie.release_date,
+                            }
+                            : movie
+                    )))
+                } else {
+                    setNowPlayingMovies((prev) => [data.movie, ...prev])
+                    setSelectedMovie(data.movie.id)
+                }
+                closeMovieForm()
                 setError('')
+                fetchShows()
                 toast.success(data.message)
             } else {
                 toast.error(data.message)
@@ -172,7 +227,11 @@ const AddShows = () => {
             )}
             <div className="mt-5 overflow-x-auto pb-4">
                 <div className="group flex w-max gap-5">
-                    <button type="button" onClick={() => setMovieFormOpen(true)}
+                    <button type="button" onClick={() => {
+                        setEditingMovieId(null)
+                        setMovieForm({ title: '', overview: '', releaseDate: '', runtime: '', poster: '', genre: '' })
+                        setMovieFormOpen(true)
+                    }}
                     className="w-40 cursor-pointer border border-dashed border-line bg-surface text-left transition hover:border-ink">
                         <div className="grid aspect-[2/3] place-items-center">
                             <PlusIcon className="h-10 w-10" strokeWidth={1.4} />
@@ -211,6 +270,11 @@ const AddShows = () => {
                     ))}
                 </div>
             </div>
+
+            <button type="button" disabled={!selectedMovie || savingMovie} onClick={openUpdate}
+            className="mt-5 cursor-pointer border border-ink px-6 py-2.5 text-[0.68rem] uppercase tracking-[0.16em] transition hover:bg-ink hover:text-canvas disabled:cursor-not-allowed disabled:opacity-40">
+                Update movie
+            </button>
 
             <div className="mt-10 grid max-w-3xl gap-6 sm:grid-cols-2">
                 <div>
@@ -269,12 +333,12 @@ const AddShows = () => {
 
             {movieFormOpen && createPortal(
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4"
-                onClick={() => setMovieFormOpen(false)}>
+                onClick={closeMovieForm}>
                     <form className="max-h-[90vh] w-full max-w-lg overflow-y-auto border border-line bg-surface p-6"
                     onClick={(event) => event.stopPropagation()}
                     onSubmit={(event) => { event.preventDefault(); saveCustomMovie() }}>
                         <p className="text-[0.68rem] uppercase tracking-[0.24em] text-accent">Catalogue</p>
-                        <h2 className="mt-2 font-display text-2xl">Add movie</h2>
+                        <h2 className="mt-2 font-display text-2xl">{editingMovieId ? 'Update movie' : 'Add movie'}</h2>
                         <p className="mt-2 text-sm text-muted">Title, overview, release date, runtime, and a poster link are required.</p>
 
                         <label className="mt-4 block text-[0.65rem] uppercase tracking-[0.16em] text-muted">
@@ -314,13 +378,13 @@ const AddShows = () => {
                         </label>
 
                         <div className="mt-5 flex justify-end gap-3">
-                            <button type="button" onClick={() => setMovieFormOpen(false)}
+                            <button type="button" onClick={closeMovieForm}
                             className="cursor-pointer border border-ink px-4 py-2 text-[0.65rem] uppercase tracking-[0.16em]">
                                 Cancel
                             </button>
                             <button type="submit" disabled={savingMovie}
                             className="cursor-pointer bg-primary px-4 py-2 text-[0.65rem] uppercase tracking-[0.16em] text-canvas disabled:opacity-60">
-                                {savingMovie ? 'Saving…' : 'Save'}
+                                {savingMovie ? 'Saving…' : editingMovieId ? 'Save changes' : 'Save'}
                             </button>
                         </div>
                     </form>

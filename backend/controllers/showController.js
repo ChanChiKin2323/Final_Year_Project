@@ -168,6 +168,51 @@ const addLocalVotes = async (movies) => {
     })
 }
 
+const withSavedDetails = async (movies) => {
+    const ids = movies.map((movie) => String(movie.id)).filter((id) => !id.startsWith('local-'))
+    if (ids.length === 0) return movies
+    const saved = await Movie.find({ _id: { $in: ids } })
+    const byId = new Map(saved.map((movie) => [String(movie._id), movie]))
+    return movies.map((movie) => {
+        const stored = byId.get(String(movie.id))
+        if (!stored) return movie
+        return {
+            ...movie,
+            title: stored.title,
+            overview: stored.overview,
+            poster_path: stored.poster_path,
+            backdrop_path: stored.backdrop_path || movie.backdrop_path,
+            release_date: stored.release_date,
+        }
+    })
+}
+
+const movieFormFields = (body) => {
+    const title = String(body.title || '').trim()
+    const overview = String(body.overview || '').trim()
+    const releaseDate = String(body.releaseDate || '').trim()
+    const runtime = Number(body.runtime)
+    const poster = String(body.poster || '').trim()
+    const genre = String(body.genre || '').trim()
+
+    if (title.length < 1) return { error: 'Title is required' }
+    if (overview.length < 1) return { error: 'Overview is required' }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) return { error: 'Release date is required' }
+    if (!Number.isFinite(runtime) || runtime < 1) return { error: 'Runtime must be at least 1 minute' }
+    if (!/^https?:\/\//i.test(poster)) return { error: 'Poster must be an image link starting with http' }
+    return { title, overview, releaseDate, runtime, poster, genre }
+}
+
+const editableMovie = (movie) => ({
+    id: movie._id,
+    title: movie.title,
+    overview: movie.overview,
+    releaseDate: movie.release_date,
+    runtime: movie.runtime,
+    poster: movie.poster_path,
+    genre: movie.genres?.[0]?.name || '',
+})
+
 const customMovieCards = async () => {
     const saved = await Movie.find({ _id: /^local-/ }).sort({ createdAt: -1 })
     const ids = saved.map((movie) => String(movie._id))
@@ -201,7 +246,8 @@ export const getNowPlayingMovies = async (req, res) => {
             headers: tmdbHeaders()
         })
 
-        res.json({ success: true, movies: [...custom, ...await addLocalVotes(data.results)] })
+        const listed = await addLocalVotes(await withSavedDetails(data.results))
+        res.json({ success: true, movies: [...custom, ...listed] })
     } catch (error) {
         console.error(error);
         const custom = await customMovieCards().catch(() => [])
@@ -214,28 +260,11 @@ export const getNowPlayingMovies = async (req, res) => {
 
 export const createCustomMovie = async (req, res) => {
     try {
-        const title = String(req.body.title || '').trim()
-        const overview = String(req.body.overview || '').trim()
-        const releaseDate = String(req.body.releaseDate || '').trim()
-        const runtime = Number(req.body.runtime)
-        const poster = String(req.body.poster || '').trim()
-        const genre = String(req.body.genre || '').trim()
-
-        if (title.length < 1) {
-            return res.json({ success: false, message: 'Title is required' })
+        const fields = movieFormFields(req.body)
+        if (fields.error) {
+            return res.json({ success: false, message: fields.error })
         }
-        if (overview.length < 1) {
-            return res.json({ success: false, message: 'Overview is required' })
-        }
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) {
-            return res.json({ success: false, message: 'Release date is required' })
-        }
-        if (!Number.isFinite(runtime) || runtime < 1) {
-            return res.json({ success: false, message: 'Runtime must be at least 1 minute' })
-        }
-        if (!/^https?:\/\//i.test(poster)) {
-            return res.json({ success: false, message: 'Poster must be an image link starting with http' })
-        }
+        const { title, overview, releaseDate, runtime, poster, genre } = fields
 
         const movie = await Movie.create({
             _id: `local-${Date.now()}`,
@@ -261,6 +290,104 @@ export const createCustomMovie = async (req, res) => {
                 poster_path: movie.poster_path,
                 release_date: movie.release_date,
                 vote_average: 0,
+                vote_count: 0,
+            },
+        })
+    } catch (error) {
+        console.error(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export const getEditableMovie = async (req, res) => {
+    try {
+        const movieId = String(req.params.movieId)
+        const saved = await Movie.findById(movieId)
+        if (saved) {
+            return res.json({ success: true, movie: editableMovie(saved) })
+        }
+        if (movieId.startsWith('local-')) {
+            return res.json({ success: false, message: 'Movie not found' })
+        }
+
+        const { data } = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, {
+            headers: tmdbHeaders()
+        })
+        res.json({
+            success: true,
+            movie: {
+                id: movieId,
+                title: data.title || '',
+                overview: data.overview || '',
+                releaseDate: data.release_date || '',
+                runtime: data.runtime || '',
+                poster: data.poster_path || '',
+                genre: data.genres?.[0]?.name || '',
+            },
+        })
+    } catch (error) {
+        console.error(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export const updateMovie = async (req, res) => {
+    try {
+        const movieId = String(req.params.movieId)
+        const fields = movieFormFields(req.body)
+        if (fields.error) {
+            return res.json({ success: false, message: fields.error })
+        }
+        const { title, overview, releaseDate, runtime, poster, genre } = fields
+
+        let movie = await Movie.findById(movieId)
+        if (!movie) {
+            if (movieId.startsWith('local-')) {
+                return res.json({ success: false, message: 'Movie not found' })
+            }
+            const [detailsResponse, creditsResponse] = await Promise.all([
+                axios.get(`https://api.themoviedb.org/3/movie/${movieId}`, { headers: tmdbHeaders() }),
+                axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, { headers: tmdbHeaders() }),
+            ])
+            const details = detailsResponse.data
+            movie = new Movie({
+                _id: movieId,
+                title,
+                overview,
+                poster_path: poster,
+                backdrop_path: poster,
+                release_date: releaseDate,
+                original_language: details.original_language || 'en',
+                tagline: details.tagline || '',
+                genres: [{ name: genre || details.genres?.[0]?.name || 'Feature' }],
+                casts: creditsResponse.data.cast || [],
+                vote_average: details.vote_average || 0,
+                catalogue_vote_average: details.vote_average || 0,
+                catalogue_vote_count: details.vote_count || 0,
+                runtime,
+            })
+        } else {
+            movie.title = title
+            movie.overview = overview
+            movie.poster_path = poster
+            movie.backdrop_path = /^https?:\/\//i.test(poster) ? poster : (movie.backdrop_path || poster)
+            movie.release_date = releaseDate
+            movie.runtime = runtime
+            movie.genres = [{ name: genre || movie.genres?.[0]?.name || 'Feature' }]
+        }
+
+        await movie.save()
+        res.json({
+            success: true,
+            message: 'Movie updated',
+            movie: {
+                id: movie._id,
+                title: movie.title,
+                overview: movie.overview,
+                poster_path: movie.poster_path,
+                backdrop_path: movie.backdrop_path,
+                release_date: movie.release_date,
+                vote_average: movie.vote_average || 0,
                 vote_count: 0,
             },
         })
